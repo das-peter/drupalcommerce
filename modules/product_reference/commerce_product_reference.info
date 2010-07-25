@@ -1,0 +1,11 @@
+; $Id$
+name = Product Reference
+description = Defines a product reference field and default display formatters.
+package = Drupal Commerce
+dependencies[] = commerce_line_item
+dependencies[] = commerce_price
+dependencies[] = commerce_product
+core = 7.x
+
+; Base module files
+files[] = commerce_product_reference.module
