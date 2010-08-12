@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: commerce_product.forms.inc,v 1.6 2010/07/14 01:43:23 rszrama Exp $
 
 /**
  * @file

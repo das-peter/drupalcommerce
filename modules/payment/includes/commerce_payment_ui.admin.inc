@@ -1,6 +1,16 @@
 <?php
-// $Id$
+// $Id: commerce_payment_ui.admin.inc,v 1.3 2010/08/09 21:14:00 rszrama Exp $
 
+/**
+ * @file
+ * Administrative page callbacks for the Payment UI module.
+ */
+
+
+/**
+ * Builds the payment settings page using the Rules UI overview table filtered
+ *   to display payment method rules.
+ */
 function commerce_payment_ui_admin_page() {
   $content['rules']['add'] = array(
     '#theme' => 'menu_local_action',
@@ -10,16 +20,17 @@ function commerce_payment_ui_admin_page() {
     ),
   );
 
-  $content['enabled']['title']['#markup'] = '<h3>' . t('Enabled rules') . '</h3>';
+  $content['enabled']['title']['#markup'] = '<h3>' . t('Enabled payment rules') . '</h3>';
 
   $conditions = array('event' => 'commerce_payment_methods', 'plugin' => 'reaction rule', 'active' => TRUE);
-  $content['enabled']['rules'] = RulesPluginUI::overviewTable($conditions, t('There are no active payment methods.'));
+  $content['enabled']['rules'] = RulesPluginUI::overviewTable($conditions);
+  $content['enabled']['rules']['#empty'] = t('There are no active payment methods.');
 
-  $content['disabled']['title']['#markup'] = '<h3>' . t('Disabled rules') . '</h3>';
+  $content['disabled']['title']['#markup'] = '<h3>' . t('Disabled payment rules') . '</h3>';
 
-  $conditions = array('event' => 'commerce_payment_methods', 'plugin' => 'reaction rule', 'active' => FALSE);
-  $content['disabled']['rules'] = RulesPluginUI::overviewTable($conditions, t('There are no inactive payment methods.'));
+  $conditions['active'] = FALSE;
+  $content['disabled']['rules'] = RulesPluginUI::overviewTable($conditions);
+  $content['disabled']['rules']['#empty'] = t('There are no disabled payment methods.');
 
   return $content;
 }
-

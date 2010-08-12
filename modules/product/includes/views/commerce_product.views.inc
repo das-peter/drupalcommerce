@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: commerce_product.views.inc,v 1.15 2010/07/19 18:38:42 rszrama Exp $
 
 /**
  * Export Drupal Commerce products to Views.
@@ -180,33 +180,4 @@ function commerce_product_views_data() {
   );
 
   return $data;
-}
-
-/**
- * Implements hook_views_handlers().
- */
-function commerce_product_views_handlers() {
-  return array(
-    'info' => array(
-      'path' => drupal_get_path('module', 'commerce_product') . '/includes/views/handlers',
-    ),
-    'handlers' => array(
-      // Field handlers
-      'commerce_product_handler_field_product' => array(
-        'parent' => 'views_handler_field',
-      ),
-      'commerce_product_handler_field_product_type' => array(
-        'parent' => 'commerce_product_handler_field_product',
-      ),
-      'commerce_product_handler_field_product_link' => array(
-        'parent' => 'views_handler_field',
-      ),
-      'commerce_product_handler_field_product_link_edit' => array(
-        'parent' => 'commerce_product_handler_field_product_link',
-      ),
-      'commerce_product_handler_field_product_link_delete' => array(
-        'parent' => 'commerce_product_handler_field_product_link',
-      ),
-    ),
-  );
 }

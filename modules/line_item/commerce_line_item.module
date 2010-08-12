@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: commerce_line_item.module,v 1.29 2010/08/12 01:59:52 rszrama Exp $
 
 /**
  * @file
@@ -91,10 +91,22 @@ function commerce_line_item_field_extra_fields() {
  */
 function commerce_line_item_theme() {
   return array(
-    'line_item_manager' => array(
+    'commerce_line_item_manager' => array(
       'render element' => 'form',
     ),
+    'commerce_line_item_summary' => array(
+      'variables' => array('quantity_raw' => NULL, 'quantity_label' => NULL, 'quantity' => NULL, 'total_raw' => NULL, 'total' => NULL, 'links' => NULL, 'view' => NULL),
+      'path' => drupal_get_path('module', 'commerce_line_item') . '/theme',
+      'template' => 'commerce-line-item-summary',
+    ),
   );
+}
+
+/**
+ * Adds the necessary CSS for the line item summary template.
+ */
+function template_preprocess_commerce_line_item_summary(&$variables) {
+  drupal_add_css(drupal_get_path('module', 'commerce_line_item') . '/theme/commerce_line_item_summary.css');
 }
 
 /**
@@ -142,10 +154,54 @@ function commerce_line_item_permission() {
   $permissions = array(
     'administer line item types' => array(
       'title' => t('Administer line item types'),
+      'description' => t('View and configure fields attached to module defined line item types.'),
+      'restrict access' => TRUE,
     ),
   );
 
   return $permissions;
+}
+
+/**
+ * Implements hook_field_attach_delete().
+ *
+ * When an entity is deleted, this hook is invoked so any attached fields can
+ * do necessary clean-up. Because line items can't exist apart from a line item
+ * reference field, this function checks the entity being deleted for any
+ * referenced line items and deletes them.
+ */
+function commerce_line_item_field_attach_delete($entity_type, $entity) {
+  $entity_info = entity_get_info($entity_type);
+
+  // If the entity being deleted has a bundle...
+  if (!empty($entity_info['entity keys']['bundle'])) {
+    // Extract the bundle name using the specified property.
+    $property = $entity_info['entity keys']['bundle'];
+    $bundle = $entity->{$property};
+  }
+  else {
+    // Otherwise use the entity type as the bundle name.
+    $bundle = $entity_type;
+  }
+
+  // Find any line item reference fields on this order and delete the
+  // referenced line items.
+  $line_item_ids = array();
+
+  foreach (field_info_instances($entity_type, $bundle) as $key => $value) {
+    // Only examine line item reference fields using the manager widget.
+    if ($value['widget']['type'] == 'commerce_line_item_manager') {
+      // Add the IDs of the reference line items to the array.
+      foreach ($entity->{$key}[LANGUAGE_NONE] as $item) {
+        $line_item_ids[] = $item['line_item_id'];
+      }
+    }
+  }
+
+  // Delete the line items if any were found.
+  if (!empty($line_item_ids)) {
+    commerce_line_item_delete_multiple($line_item_ids);
+  }
 }
 
 /**
@@ -539,7 +595,7 @@ function commerce_line_item_field_widget_form(&$form, &$form_state, $field, $ins
     // Update the base form element array to use the proper theme and validate
     // functions and to include header information for the line item table.
     $element += array(
-      '#theme' => 'line_item_manager',
+      '#theme' => 'commerce_line_item_manager',
       '#element_validate' => array('commerce_line_item_manager_validate'),
       '#header' => array(t('Remove'), t('Title'), t('SKU'), t('Qty'), t('Unit Price'), t('Total')),
       '#empty' => t('No line items found.'),
@@ -672,7 +728,7 @@ function commerce_line_item_manager_refresh($form, $form_state) {
 /**
  * Themes the line item manager widget form element.
  */
-function theme_line_item_manager($variables) {
+function theme_commerce_line_item_manager($variables) {
   drupal_add_css(drupal_get_path('module', 'commerce_line_item') . '/theme/commerce_line_item.manager.css');
 
   $form = $variables['form'];

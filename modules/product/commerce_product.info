@@ -1,4 +1,4 @@
-; $Id$
+; $Id: commerce_product.info,v 1.21 2010/07/12 13:15:29 rszrama Exp $
 name = Product
 description = Defines the Product entity and associated features.
 package = Drupal Commerce

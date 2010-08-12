@@ -1,4 +1,4 @@
-; $Id$
+; $Id: commerce_order.info,v 1.10 2010/08/09 21:13:25 rszrama Exp $
 name = Order
 description = Defines the Order entity and associated features.
 package = Drupal Commerce
@@ -24,6 +24,7 @@ files[] = includes/views/handlers/commerce_order_handler_field_order_status.inc
 files[] = includes/views/handlers/commerce_order_handler_field_order_link.inc
 files[] = includes/views/handlers/commerce_order_handler_field_order_link_delete.inc
 files[] = includes/views/handlers/commerce_order_handler_field_order_link_edit.inc
+files[] = includes/views/handlers/commerce_order_handler_filter_status.inc
 
 ; Simple tests
 ; files[] = tests/commerce_order.test

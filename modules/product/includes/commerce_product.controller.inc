@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: commerce_product.controller.inc,v 1.12 2010/08/12 01:20:59 rszrama Exp $
 
 /**
  * @file
@@ -47,7 +47,7 @@ class CommerceProductEntityController extends DrupalDefaultEntityController {
     $transaction = db_transaction();
 
     try {
-      $product->changed = time();
+      $product->changed = REQUEST_TIME;
 
       // Save a copy of the unchanged product for rules in case of updates.
       // see commerce_product_rules_var_unchanged().
@@ -64,7 +64,7 @@ class CommerceProductEntityController extends DrupalDefaultEntityController {
       // If this is a new product...
       if (empty($product->product_id)) {
         // Set the creation timestamp.
-        $product->created = time();
+        $product->created = REQUEST_TIME;
 
         // Save the new product and fields.
         drupal_write_record('commerce_product', $product);

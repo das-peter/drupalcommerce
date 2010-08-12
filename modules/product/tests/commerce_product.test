@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: commerce_product.test,v 1.7 2010/08/12 01:20:59 rszrama Exp $
 
 /**
  * @file
@@ -310,7 +310,7 @@ class CommerceProductRulesTestCase extends DrupalWebTestCase {
       case 'duration':
         return 1;
       case 'date':
-        return time();
+        return REQUEST_TIME;
       case 'boolean':
         return TRUE;
       case 'text':

@@ -1,0 +1,6 @@
+/* $Id: commerce_cart.css,v 1.1 2010/08/12 01:21:17 rszrama Exp $ */
+
+.view-commerce-cart-block .field-name-total,
+.view-commerce-cart-summary .field-name-total {
+  text-align: right;
+}

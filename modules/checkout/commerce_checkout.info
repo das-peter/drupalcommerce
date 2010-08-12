@@ -1,4 +1,4 @@
-; $Id$
+; $Id: commerce_checkout.info,v 1.2 2010/05/20 04:08:49 rszrama Exp $
 name = Checkout
 description = Enable checkout as a multi-step form with customizable checkout pages.
 package = Drupal Commerce

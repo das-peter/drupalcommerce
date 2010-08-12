@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: commerce_price.inc,v 1.6 2010/06/03 18:01:52 rszrama Exp $
 
 /**
  * @file

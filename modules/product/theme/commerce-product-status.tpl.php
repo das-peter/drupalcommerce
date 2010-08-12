@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: commerce-product-status.tpl.php,v 1.1 2010/07/12 13:15:16 rszrama Exp $
 
 /**
  * @file

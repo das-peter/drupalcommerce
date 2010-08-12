@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: commerce_order.views.inc,v 1.11 2010/08/09 21:13:26 rszrama Exp $
 
 /**
  * Export Drupal Commerce orders to Views.
@@ -94,7 +94,7 @@ function commerce_order_views_data() {
       'click sortable' => TRUE,
     ),
     'filter' => array(
-      'handler' => 'views_handler_filter_string',
+      'handler' => 'commerce_order_handler_filter_status',
     ),
     'sort' => array(
       'handler' => 'views_handler_sort',
@@ -159,36 +159,4 @@ function commerce_order_views_data() {
   );
 
   return $data;
-}
-
-/**
- * Implements hook_views_handlers().
- */
-function commerce_order_views_handlers() {
-  return array(
-    'info' => array(
-      'path' => drupal_get_path('module', 'commerce_order') . '/includes/views/handlers',
-    ),
-    'handlers' => array(
-      // Field handlers
-      'commerce_order_handler_field_order' => array(
-        'parent' => 'views_handler_field',
-      ),
-      'commerce_order_handler_field_order_status' => array(
-        'parent' => 'commerce_order_handler_field_order',
-      ),      
-      'commerce_order_handler_field_order_link' => array(
-        'parent' => 'views_handler_field',
-      ),
-      'commerce_order_handler_field_order_link_edit' => array(
-        'parent' => 'commerce_order_handler_field_order_link',
-      ),
-      'commerce_order_handler_field_order_link_delete' => array(
-        'parent' => 'commerce_order_handler_field_order_link',
-      ),
-
-      // Argument handlers
-      'commerce_order_handler_argument_order_order_id',
-    ),
-  );
 }

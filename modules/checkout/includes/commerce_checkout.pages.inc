@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: commerce_checkout.pages.inc,v 1.21 2010/08/12 01:20:17 rszrama Exp $
 
 /**
  * @file
@@ -11,14 +11,21 @@
  * Redirects invalid checkout attempts or displays the checkout form if valid.
  */
 function commerce_checkout_router($order, $checkout_page = NULL) {
-  // If there are no line items on the order, redirect away.
-  if (commerce_line_items_quantity($order->line_items, 'product') == 0) {
-    drupal_goto(variable_get('commerce_checkout_empty_redirect', '<front>'));
-  }
-
   // If no checkout page is specified, default to the first one.
   if (empty($checkout_page)) {
     $checkout_page = reset(commerce_checkout_pages());
+  }
+
+  // If the user does not have access to checkout the order, return a 404. We
+  // could return a 403, but then the user would know they've identified a
+  // potentially valid checkout URL.
+  if (!commerce_checkout_access($order, $checkout_page)) {
+    return drupal_not_found();
+  }
+
+  // If there are no line items on the order, redirect away.
+  if (commerce_line_items_quantity($order->line_items, 'product') == 0) {
+    drupal_goto(variable_get('commerce_checkout_empty_redirect', '<front>'));
   }
 
   // Update the page title if specified.
@@ -261,7 +268,7 @@ function commerce_checkout_form_cancel_submit($form, &$form_state) {
     // commerce_order_comment_save($form_state['values']['order']->order_id, 0, t('Customer cancelled this order from the checkout form.'));
   }
 
-  drupal_set_message(t('Checkout of your current order has been canceled at may be resumed when you are ready.'));
+  drupal_set_message(t('Checkout of your current order has been canceled and may be resumed when you are ready.'));
 
   $form_state['redirect'] = $form_state['values']['cancel_redirect'];
 }

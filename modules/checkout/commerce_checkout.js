@@ -1,4 +1,4 @@
-// $Id$
+// $Id: commerce_checkout.js,v 1.2 2010/07/12 13:18:09 rszrama Exp $
 ;(function($) {
 
   /**

@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: commerce_payment.rules_defaults.inc,v 1.2 2010/08/09 21:13:46 rszrama Exp $
 
 /**
  * @file
@@ -13,17 +13,21 @@ function commerce_payment_default_rules_configuration() {
   $rules = array();
 
   // Add a default rule for each available payment method.
-  foreach (commerce_payment_methods() as $method) {
+  foreach (commerce_payment_methods() as $method_id => $payment_method) {
     $rule = rules_reaction_rule();
-    $rule->label = $method['title'];
+
+    $rule->label = $payment_method->title;
     $rule->active = FALSE;
+
     $rule
       ->event('commerce_payment_methods')
-      ->action('commerce_payment_enable_' . $method['method_id'], array(
+      ->action('commerce_payment_enable_' . $method_id, array(
         'commerce_order:select' => 'order',
+        'payment_method' => $method_id,
       ));
 
-    $rules['commerce_payment_' . $method['method_id']] = $rule;
+    $rules['commerce_payment_' . $method_id] = $rule;
   }
+
   return $rules;
 }

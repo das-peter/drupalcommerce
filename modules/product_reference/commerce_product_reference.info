@@ -1,4 +1,4 @@
-; $Id$
+; $Id: commerce_product_reference.info,v 1.6 2010/07/12 13:13:59 rszrama Exp $
 name = Product Reference
 description = Defines a product reference field and default display formatters.
 package = Drupal Commerce

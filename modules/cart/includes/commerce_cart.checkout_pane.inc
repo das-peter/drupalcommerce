@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: commerce_cart.checkout_pane.inc,v 1.11 2010/08/12 01:21:17 rszrama Exp $
 
 /**
  * @file
@@ -31,7 +31,10 @@ function commerce_cart_contents_pane_settings_form($checkout_pane) {
     '#title' => t('Cart contents View'),
     '#description' => t('Specify the View to use in the cart contents pane.'),
     '#options' => $options,
-    '#default_value' => variable_get('commerce_cart_contents_pane_view', 'commerce_cart|default'),
+    '#default_value' => variable_get('commerce_cart_contents_pane_view', 'commerce_cart_summary|default'),
+    '#attached' => array(
+      'css' => drupal_get_path('module', 'commerce_cart') . '/theme/commerce_cart.css',
+    ),
   );
 
   return $form;
@@ -41,11 +44,11 @@ function commerce_cart_contents_pane_settings_form($checkout_pane) {
  * Checkout pane callback: returns the cart contents View for inclusion in the
  *   checkout form.
  */
-function commerce_cart_contents_pane_form($pane_values, $checkout_pane, $order) {
+function commerce_cart_contents_pane_checkout_form($pane_values, $checkout_pane, $order) {
   $form = array();
 
   // Extract the View and display keys from the cart contents pane setting.
-  list($view_id, $display_id) = explode('|', variable_get('commerce_cart_contents_pane_view', 'commerce_cart|default'));
+  list($view_id, $display_id) = explode('|', variable_get('commerce_cart_contents_pane_view', 'commerce_cart_summary|default'));
 
   $form['cart_contents_view'] = array(
     '#markup' => commerce_embed_view($view_id, $display_id, $order->order_id),
@@ -60,7 +63,10 @@ function commerce_cart_contents_pane_form($pane_values, $checkout_pane, $order) 
  */
 function commerce_cart_contents_pane_review($form_state, $order) {
   // Extract the View and display keys from the cart contents pane setting.
-  list($view_id, $display_id) = explode('|', variable_get('commerce_cart_contents_pane_view', 'commerce_cart|default'));
+  list($view_id, $display_id) = explode('|', variable_get('commerce_cart_contents_pane_view', 'commerce_cart_summary|default'));
+
+  // Add the CSS to the page.
+  drupal_add_css(drupal_get_path('module', 'commerce_cart') . '/theme/commerce_cart.css');
 
   return commerce_embed_view($view_id, $display_id, $order->order_id);
 }

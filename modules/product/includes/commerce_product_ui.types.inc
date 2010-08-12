@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: commerce_product_ui.types.inc,v 1.7 2010/07/14 01:43:23 rszrama Exp $
 
 /**
  * Menu callback: display an overview of available types.

@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: commerce_line_item.views.inc,v 1.12 2010/08/12 01:20:54 rszrama Exp $
 
 /**
  * Export Drupal Commerce line items to Views.
@@ -50,7 +50,7 @@ function commerce_line_item_views_data() {
       'click sortable' => TRUE,
     ),
     'filter' => array(
-      'handler' => 'views_handler_filter_string',
+      'handler' => 'commerce_line_item_handler_filter_line_item_type',
     ),
     'sort' => array(
       'handler' => 'views_handler_sort',
@@ -101,20 +101,45 @@ function commerce_line_item_views_data() {
     ),
   );
 
-  return $data;
-}
-
-/**
- * Implements hook_views_handlers().
- */
-function commerce_line_item_views_handlers() {
-  return array(
-    'info' => array(
-      'path' => drupal_get_path('module', 'commerce_line_item') . '/includes/views/handlers',
+  // Expose the created and changed timestamps.
+  $data['commerce_line_item']['created'] = array(
+    'title' => t('Created date'),
+    'help' => t('The date the line item was created.'),
+    'field' => array(
+      'handler' => 'views_handler_field_date',
+      'click sortable' => TRUE,
     ),
-    'handlers' => array(
-      'commerce_line_item_handler_argument_line_item_line_item_id',
-      'commerce_line_item_handler_field_line_item_type',
+    'sort' => array(
+      'handler' => 'views_handler_sort_date',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_date',
     ),
   );
+
+  $data['commerce_line_item']['changed'] = array(
+    'title' => t('Updated date'),
+    'help' => t('The date the line item was last updated.'),
+    'field' => array(
+      'handler' => 'views_handler_field_date',
+      'click sortable' => TRUE,
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort_date',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_date',
+    ),
+  );
+
+  // Define a handler for an area used to summarize a set of line items.
+  $data['commerce_line_item']['line_item_summary'] = array(
+    'title' => t('Line item summary'),
+    'help' => t('Summarize the line items in a View with an optional link to checkout.'),
+    'area' => array(
+      'handler' => 'commerce_line_item_handler_area_line_item_summary',
+    ),
+  );
+
+  return $data;
 }

@@ -1,4 +1,4 @@
-; $Id$
+; $Id: commerce_line_item.info,v 1.10 2010/08/12 01:20:54 rszrama Exp $
 name = Line Item
 description = Defines the Line Item entity and associated features.
 package = Drupal Commerce
@@ -15,8 +15,10 @@ files[] = includes/commerce_line_item.controller.inc
 
 ; Views include
 files[] = includes/views/commerce_line_item.views.inc
+files[] = includes/views/handlers/commerce_line_item_handler_area_line_item_summary.inc
 files[] = includes/views/handlers/commerce_line_item_handler_argument_line_item_line_item_id.inc
 files[] = includes/views/handlers/commerce_line_item_handler_field_line_item_type.inc
+files[] = includes/views/handlers/commerce_line_item_handler_filter_line_item_type.inc
 
 ; Simple tests
 ; files[] = tests/commerce_line_item.test

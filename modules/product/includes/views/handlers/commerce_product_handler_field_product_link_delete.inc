@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: commerce_product_handler_field_product_link_delete.inc,v 1.1 2010/06/09 19:24:13 rszrama Exp $
 
 /**
  * Field handler to present a link to delete a product.

@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: commerce_payment.rules.inc,v 1.3 2010/08/09 21:13:51 rszrama Exp $
 
 /**
  * @file
@@ -29,21 +29,23 @@ function commerce_payment_rules_event_info() {
  * Implements hook_rules_action_info().
  */
 function commerce_payment_rules_action_info() {
+  $actions = array();
+
   // Add an action for each available payment method.
-  foreach (commerce_payment_methods() as $method) {
-    $actions['commerce_payment_enable_' . $method['method_id']] = array(
-      'label' => t('Enable payment method: @method', array('@method' => $method['title'])),
+  foreach (commerce_payment_methods() as $payment_method) {
+    $actions['commerce_payment_enable_' . $payment_method->method_id] = array(
+      'label' => t('Enable payment method: @method', array('@method' => $payment_method->title)),
       'parameter' => array(
         'commerce_order' => array('type' => 'commerce_order', 'label' => t('Order')),
         'payment_method' => array(
           'type' => 'commerce_payment_settings',
           'restriction' => 'input',
           'label' => t('Payment settings'),
-          'payment_method' => $method['method_id'],
+          'payment_method' => $payment_method->method_id,
         ),
       ),
-      'group' => t('Drupal Commerce - payment'),
-      'base' => $method['base'],
+      'group' => t('Commerce - payment'),
+      'base' => $payment_method->base,
       'callbacks' => array(
         'execute' => 'commerce_payment_enable_method',
       ),
@@ -51,12 +53,12 @@ function commerce_payment_rules_action_info() {
   }
 
   $actions['commerce_payment_capture'] = array(
-    'label' => t('Capture from a previous authorization'),
+    'label' => t('Capture from a prior authorization'),
     'parameter' => array(
       'commerce_order' => array('type' => 'commerce_order', 'label' => t('Order')),
       'amount' => array('type' => 'text', 'label' => t('Amount')),
     ),
-    'group' => t('Drupal Commerce - payment'),
+    'group' => t('Commerce - payment'),
   );
 
   return $actions;
@@ -65,8 +67,8 @@ function commerce_payment_rules_action_info() {
 /**
  * Generic execution callback for the payment method.
  */
-function commerce_payment_enable_method($order, $payment_method) {
-  $order->payment_methods[] = $payment_method;
+function commerce_payment_enable_method($order, $method_id) {
+  $order->payment_methods[] = $method_id;
 }
 
 /**
@@ -90,17 +92,19 @@ function commerce_payment_rules_data_info() {
 /**
  * UI for textual data.
  */
-class RulesDataUIPaymentSettings extends RulesDataUI implements RulesDataDirectInputForm {
+class RulesDataUIPaymentSettings extends RulesDataUI implements RulesDataDirectInputFormInterface {
   public static function getDefaultMode() {
     return 'input';
   }
 
   public static function inputForm($name, $info, $settings, RulesPlugin $element) {
-    $payment_method = commerce_payment_method($info['payment_method']);
-    if ($payment_method) {
+    // If the specified payment method exists...
+    if ($payment_method = commerce_payment_method_load($info['payment_method'])) {
       $form[$name]['method_id'] = array('#type' => 'value', '#value' => $info['payment_method']);
-      if (function_exists($payment_method['callbacks']['settings'])) {
-        $form[$name]['settings'] = $payment_method['callbacks']['settings']($settings[$name]['settings']);
+
+      if (function_exists($payment_method->callbacks['settings'])) {
+        $method_settings = !empty($settings[$name]) ? $settings[$name]['settings'] : array();
+        $form[$name]['settings'] = $payment_method->callbacks['settings']($method_settings);
       }
       else {
         $form[$name]['settings']['no_settings']['#markup'] = t('No settings for this payment method.');
@@ -109,6 +113,7 @@ class RulesDataUIPaymentSettings extends RulesDataUI implements RulesDataDirectI
     else {
       $form[$name]['invalid']['#markup'] = t('Invalid payment method.');
     }
+
     return $form;
   }
 

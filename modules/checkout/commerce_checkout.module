@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: commerce_checkout.module,v 1.25 2010/08/12 01:20:16 rszrama Exp $
 
 /**
  * @file
@@ -87,6 +87,11 @@ function commerce_checkout_permission() {
     'administer checkout' => array(
       'title' => t('Administer checkout'),
       'description' => t('Configure checkout settings and the checkout form itself.'),
+      'restrict access' => TRUE,
+    ),
+    'access checkout' => array(
+      'title' => t('Access checkout'),
+      'description' => t('Complete a purchase through the checkout form.'),
     ),
   );
 
@@ -121,10 +126,10 @@ function commerce_checkout_theme() {
 /**
  * Implements hook_forms().
  *
- * To provide distinct form IDs for add to cart forms, the product IDs
- * referenced by the form are appended to the base ID, commerce_cart_form. When
- * such a form is built or submitted, this function will validate the form ID
- * and return the proper callback function to use for the given $form_id.
+ * Each page of the checkout form is actually a unique form as opposed to a
+ * single multistep form. To accommodate this, we map any form ID beginning with
+ * commerce_checkout_form_ to the same form builder assuming the remainder of
+ * the form ID matches a valid checkout page ID.
  */
 function commerce_checkout_forms($form_id, $args) {
   $forms = array();
@@ -171,6 +176,7 @@ function commerce_checkout_commerce_order_status_info() {
       'name' => 'checkout_' . $page_id,
       'title' => t('Checkout: @page', array('@page' => $checkout_page->name)),
       'state' => 'checkout',
+      'checkout_page' => $page_id,
       'cart' => $checkout_page->status_cart,
       'weight' => $checkout_page->weight,
       'status' => 1,
@@ -221,9 +227,7 @@ function commerce_checkout_commerce_checkout_pane_info() {
   $checkout_panes['checkout_review'] = (object) array(
     'title' => t('Review '),
     'file' => 'includes/commerce_checkout.checkout_pane.inc',
-    'callbacks' => array(
-      'checkout_form' => 'commerce_checkout_review_pane_form',
-    ),
+    'base' => 'commerce_checkout_review_pane',
     'page' => 'review',
     'weight' => 0,
   );
@@ -275,12 +279,21 @@ function commerce_checkout_pages() {
     $checkout_page = NULL;
 
     foreach ($checkout_pages as $checkout_page) {
-      if ($previous_page) {
-        $checkout_page->prev_page = $previous_page->page_id;
-        $previous_page->next_page = $checkout_page->page_id;
-      }
+      // Look for any checkout panes assigned to this page.
+      $checkout_panes = commerce_checkout_panes(array('page' => $checkout_page->page_id));
 
-      $previous_page = $checkout_page;
+      // If this is the checkout page or at least one pane was found...
+      if ($checkout_page->page_id == 'complete' || !empty($checkout_panes)) {
+        // If a page has been stored as the previous page...
+        if ($previous_page) {
+          // Set the current page's previous page and the previous page's next.
+          $checkout_page->prev_page = $previous_page->page_id;
+          $previous_page->next_page = $checkout_page->page_id;
+        }
+
+        // Set the current page as the previous page for the next iteration.
+        $previous_page = $checkout_page;
+      }
     }
   }
 
@@ -349,6 +362,7 @@ function commerce_checkout_panes($conditions = array()) {
 
       // Set some defaults for the checkout pane.
       $defaults = array(
+        'base' => $pane_id,
         'name' => $checkout_pane->title,
         'page' => 'checkout',
         'collapsible' => FALSE,
@@ -356,8 +370,16 @@ function commerce_checkout_panes($conditions = array()) {
         'weight' => 0,
         'enabled' => TRUE,
         'review' => TRUE,
+        'callbacks' => array(),
       );
       $checkout_pane = (object) array_merge($defaults, (array) $checkout_pane);
+
+      // Merge in default callbacks.
+      foreach (array('settings_form', 'checkout_form', 'checkout_form_validate', 'checkout_form_submit', 'review') as $callback) {
+        if (!isset($checkout_pane->callbacks[$callback])) {
+          $checkout_pane->callbacks[$callback] = $checkout_pane->base . '_' . $callback;
+        }
+      }
 
       $checkout_panes[$pane_id] = $checkout_pane;
     }
@@ -485,6 +507,89 @@ function commerce_checkout_pane_callback($checkout_pane, $callback) {
 
   // Otherwise return FALSE.
   return FALSE;
+}
+
+/**
+ * Checks the current user's access to the specified checkout page and order.
+ *
+ * @param $order
+ *   The fully loaded order object represented on the checkout form.
+ * @param $checkout_page
+ *   The fully loaded checkout page object representing the current step in the
+ *     checkout process.
+ * @param $account
+ *   Alternately provide an account object whose access to check instead of the
+ *     current user.
+ *
+ * @return
+ *   TRUE or FALSE indicating access.
+ */
+function commerce_checkout_access($order, $checkout_page, $account = NULL) {
+  global $user;
+
+  // Default to the current user as the account whose access we're checking.
+  if (empty($account)) {
+    $account = clone($user);
+  }
+
+  // First, if this order doesn't belong to the account return FALSE.
+  if ($account->uid) {
+    if ($account->uid != $order->customer_uid ) {
+      return FALSE;
+    }
+  }
+  else {
+    if (empty($_SESSION['commerce_cart_order_id']) || $_SESSION['commerce_cart_order_id'] != $order->order_id) {
+      return FALSE;
+    }
+  }
+
+  // Load the order status object for the current order.
+  $order_status = commerce_order_status_load($order->status);
+
+  // If the order is not in a checkout status, return FALSE for any page but the
+  // completion page unless the order is still a shopping cart.
+  if ($order_status->state != 'checkout' && $checkout_page->page_id != 'complete') {
+    if ($order_status->state == 'cart') {
+      $first_page = array_shift(array_keys(commerce_checkout_pages()));
+
+      if ($checkout_page->page_id != $first_page) {
+        return FALSE;
+      }
+    }
+    elseif ($checkout_page->page_id != 'complete') {
+      // TODO: This will likely cause problems for orders in statuses that have
+      // been canceled or something where accessing a checkout completion page
+      // shouldn't be possible.
+      return FALSE;
+    }
+  }
+
+  // If the order is still in checkout, only allow access to pages that it is
+  // currently on or has previously completed.
+  if ($order_status->state == 'checkout') {
+    $status_checkout_page = commerce_checkout_page_load($order_status->checkout_page);
+
+    // However, if buttons aren't present on the status's checkout page, don't
+    //  allow access unless the order status matches the page.
+    if (!$status_checkout_page->buttons && $status_checkout_page->page_id != $checkout_page->page_id) {
+      // The exception here for the checkout completion page allows customers to
+      // access this page for any order status the order might be moved to when
+      // the order is completed.
+      if ($checkout_page->page_id != 'complete') {
+        return FALSE;
+      }
+    }
+    else {
+      // Compare the weights of the currently requested page against the weight
+      // of the order status's page and return FALSE if it's greater.
+      if ($checkout_page->weight > $status_checkout_page->weight) {
+        return FALSE;
+      }
+    }
+  }
+
+  return TRUE;
 }
 
 /**
