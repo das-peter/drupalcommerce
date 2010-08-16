@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_product_reference.module,v 1.36 2010/08/12 01:20:39 rszrama Exp $
+// $Id: commerce_product_reference.module,v 1.37 2010/08/12 19:36:31 rszrama Exp $
 
 /**
  * @file
@@ -615,15 +615,9 @@ function commerce_product_reference_configure_line_item() {
         'type' => 'commerce_product_reference_autocomplete',
       ),
 
-      // Define default formatters for the teaser and full view.
       'display' => array(
-        'full' => array(
+        'display' => array(
           'label' => 'hidden',
-          // 'type' => 'text_default',
-        ),
-        'teaser' => array(
-          'label' => 'hidden',
-          // 'type' => 'text_summary_or_trimmed',
         ),
       ),
     );
