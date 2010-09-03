@@ -37,12 +37,12 @@ function commerce_product_features_export($data, &$export, $module_name = '') {
   $pipe = array();
   $type_map = commerce_product_types();
   $module_map = array();
-  
+
   foreach ($type_map as $module) {
-    
+
     $callback = "commerce_product_entity_info";
     $module_map[$module_type] = $module;
- 
+
     $node_types = call_user_func($callback);
     if (is_array($node_types)) {
       foreach ($node_types as $module_type => $module_info) {
@@ -55,7 +55,7 @@ function commerce_product_features_export($data, &$export, $module_name = '') {
     $export['dependencies']['commerce_product'] = 'commerce_product';
     $export['dependencies']['features'] = 'features';
     $export['features']['commerce_product'][$type] = $type;
-    
+
     $fields = field_info_instances('commerce_product', $type);
     foreach ($fields as $name => $field) {
       $pipe['field'][] = "{$field['bundle']}-{$field['field_name']}";
@@ -81,11 +81,11 @@ function commerce_product_features_export_render($module = 'foo', $data) {
       //Jump to next field to keep the code clean
       continue;
     }
-    
+
     unset($field['columns']);
     unset($field['locked']);
     unset($field['storage']);
-    
+
     //Attache instance information
     if(isset($field['bundles'])){
       foreach($field['bundles'] as $entity_type=>$bundles){
@@ -130,8 +130,10 @@ function commerce_product_features_revert($module) {
  * Implementation of hook_features_rebuild().
  * Rebuilds CCK field definitions from code defaults.
  */
-function commerce_product_features_rebuild($module) {
-  $fields = module_invoke($module, 'field_default_fields');
+function commerce_product($module) {
+  //@TODO Breaks the latest code - do we really need this kind of code duplication?
+  return;
+  $fields = module_invoke($_features_rebuildmodule, 'field_default_fields');
   if (!empty($fields)) {
     field_info_cache_clear();
 
@@ -144,7 +146,7 @@ function commerce_product_features_rebuild($module) {
       else {
         field_create_field($field);
       }
-   
+
       // update/create field instances
       if(!empty($field['bundles'])) {
         foreach($field['bundles'] as $entity_type => $bundles) {
@@ -168,10 +170,10 @@ function commerce_product_features_rebuild($module) {
                 $fieldInstance['entity_type'] = $entity_type;
                 $fieldInstance['bundle'] = $bundle;
                 field_create_instance($fieldInstance);
-              }            
+              }
             }
           }
-           
+
         }
       }
 
