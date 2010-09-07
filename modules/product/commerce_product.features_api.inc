@@ -35,30 +35,16 @@ function commerce_product_features_export_options() {
 
 function commerce_product_features_export($data, &$export, $module_name = '') {
   $pipe = array();
-  $type_map = commerce_product_types();
-  $module_map = array();
 
-  foreach ($type_map as $module) {
-
-    $callback = "commerce_product_entity_info";
-    $module_map[$module_type] = $module;
-
-    $node_types = call_user_func($callback);
-    if (is_array($node_types)) {
-      foreach ($node_types as $module_type => $module_info) {
-        $module_map[$module_type] = $module;
-      }
-    }
-  }
+  // Add commerce_product as dependency
+  $export['dependencies']['commerce_product'] = 'commerce_product';
 
   foreach ($data as $type) {
-    $export['dependencies']['commerce_product'] = 'commerce_product';
-    $export['dependencies']['features'] = 'features';
     $export['features']['commerce_product'][$type] = $type;
 
     $fields = field_info_instances('commerce_product', $type);
     foreach ($fields as $name => $field) {
-      $pipe['field'][] = "{$field['bundle']}-{$field['field_name']}";
+      $pipe['field'][] = "commerce_product-{$field['bundle']}-{$field['field_name']}";
     }
   }
   return $pipe;
@@ -68,54 +54,29 @@ function commerce_product_features_export($data, &$export, $module_name = '') {
  * Implementation of hook_features_export_render().
  */
 function commerce_product_features_export_render($module = 'foo', $data) {
-  $translatables = $code = array();
-
-  $code[] = '  $fields = array();';
-  $code[] = '';
-  foreach ($data as $instance) {
-    list($bundle, $field_name) = explode('-', $instance);
-
-    $field = field_info_field($field_name);
-    if(!$field){
-      //Outch - something is wrong :|
-      //Jump to next field to keep the code clean
-      continue;
-    }
-
-    unset($field['columns']);
-    unset($field['locked']);
-    unset($field['storage']);
-
-    //Attache instance information
-    if(isset($field['bundles'])){
-      foreach($field['bundles'] as $entity_type=>$bundles){
-        if(in_array($bundle, $bundles)){
-            $fieldInstance = field_info_instance($entity_type, $field_name, $bundle);
-            $field['instances'][$field_name][$bundle] = $fieldInstance;
-            // Add any labels to translatables array.
-            if (!empty($fieldInstance['widget']['label'])) {
-              $translatables[] = $field['widget']['label'];
-            }
-            break;
+  $output = array();
+  $output[] = '  $items = array(';
+  foreach ($data as $type) {
+    $info = commerce_product_type_load($type);
+    if(!empty($info)) {
+      $output[] = "    '{$type}' => array(";
+      foreach ($info as $key => $t) {
+        if ($t) {
+          $text = str_replace("'", "\'", $info->$key);
+          $text = !empty($text) ? "t('{$text}')" : "''";
+          $output[] = "      '{$key}' => {$text},";
+        }
+        else {
+          $output[] = "      '{$key}' => '{$info->$key}',";
         }
       }
-    }
-
-    $code[] = '  // Exported field: ' . $field_name;
-    $code[] = '  $fields[] = ' . features_var_export($field, '  ') . ';';
-    $code[] = '';
-
-    // Add any labels to translatables array.
-    if (!empty($field['widget']['label'])) {
-      $translatables[] = $field['widget']['label'];
+      $output[] = "    ),";
     }
   }
-  if (!empty($translatables)) {
-    $code[] = features_translatables_export($translatables, '  ');
-  }
-  $code[] = '  return $fields;';
-  $code = implode("\n", $code);
-  return array('field_default_fields' => $code, );
+  $output[] = '  );';
+  $output[] = '  return $items;';
+  $output = implode("\n", $output);
+  return array('commerce_product_info' => $output);
 }
 
 
@@ -123,62 +84,20 @@ function commerce_product_features_export_render($module = 'foo', $data) {
  * Implementation of hook_features_revert().
  */
 function commerce_product_features_revert($module) {
-  field_features_rebuild($module);
-}
-
-/**
- * Implementation of hook_features_rebuild().
- * Rebuilds CCK field definitions from code defaults.
- */
-function commerce_product($module) {
-  //@TODO Breaks the latest code - do we really need this kind of code duplication?
-  return;
-  $fields = module_invoke($_features_rebuildmodule, 'field_default_fields');
-  if (!empty($fields)) {
-    field_info_cache_clear();
-
-    foreach ($fields as $field) {
-      $existing_field = field_info_field($field['field_name']);
-      unset($field['id']);
-      if (!empty($existing_field)) {
-        field_update_field($field);
-      }
-      else {
-        field_create_field($field);
-      }
-
-      // update/create field instances
-      if(!empty($field['bundles'])) {
-        foreach($field['bundles'] as $entity_type => $bundles) {
-          if(is_array($bundles)) {
-            foreach($bundles as $bundle) {
-              $instance = field_info_instance($entity_type, $field['field_name'], $bundle);
-              if ($instance) {
-                field_update_instance($instance);
-              } else {
-                //@TODO Is this legacy check within a dev release really necessary?
-                if(isset($field['instances'])){
-                  //Check if this bundle has an instance - if not go to the next one
-                  if(!isset($field['instances'][$field['field_name']][$bundle])){
-                    continue;
-                  }
-                  $fieldInstance = $field['instances'][$field['field_name']][$bundle];
-                }
-                else{
-                  $fieldInstance = $field;
-                }
-                $fieldInstance['entity_type'] = $entity_type;
-                $fieldInstance['bundle'] = $bundle;
-                field_create_instance($fieldInstance);
-              }
-            }
-          }
-
-        }
-      }
-
-      variable_set('menu_rebuild_needed', TRUE);
+  // Get product types
+  if (module_hook($module, 'commerce_product_info')) {
+    $product_types = module_invoke($module, 'commerce_product_info');
+    foreach($product_types as $type_name => $type_data) {
+      $product_type = commerce_product_type_new();
+  
+      $product_type->type = $type_name;
+      $product_type->name = $type_data['name'];
+      $product_type->description = $type_data['description'];
+      
+      commerce_product_type_get_name($type_name) === FALSE ? $is_new = TRUE : $is_new = FALSE;
+      $product_type->is_new = $is_new;
+    
+      commerce_product_type_save($product_type);
     }
-  }
+  }   
 }
-
