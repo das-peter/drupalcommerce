@@ -130,8 +130,12 @@ function commerce_product_product_type_form_submit($form, &$form_state) {
 
   // Write the product type to the database.
   $product_type->is_new = !$updated;
+  $product_type->modified = $updated;
   commerce_product_type_save($product_type);
-
+  
+  // Rebuild the product types
+  commerce_product_types_rebuild();
+  
   // Redirect based on the button clicked.
   drupal_set_message(t('Product type saved.'));
 }
@@ -172,6 +176,9 @@ function commerce_product_product_type_delete_form_submit($form, &$form_state) {
 
   commerce_product_type_delete($product_type->type);
 
+  // Rebuild the product types
+  commerce_product_types_rebuild();
+  
   drupal_set_message(t('The product type %name has been deleted.', array('%name' => $product_type->name)));
   watchdog('commerce_product', 'Deleted product type %name.', array('%name' => $product_type->name), WATCHDOG_NOTICE);
 }

@@ -126,6 +126,13 @@ function commerce_product_schema() {
         'not null' => TRUE,
         'size' => 'medium',
       ),
+      'modified' => array(
+        'description' => 'A boolean indicating whether this type has been modified by an administrator.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'size' => 'tiny',
+      ),
     ),
     'primary key' => array('type'),
   );
