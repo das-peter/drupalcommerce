@@ -113,11 +113,6 @@ function commerce_product_field_extra_fields() {
           'description' => t('Full product title'),
           'weight' => -5,
         ),
-        'status' => array(
-          'label' => 'Status',
-          'description' => t("The product's active vs. disabled status"),
-          'weight' => 35,
-        ),
       ),
     );
   }
@@ -160,13 +155,13 @@ function commerce_product_permission() {
   // products permission should have access to do anything the permissions below
   // grant a user to do.
   foreach (commerce_product_type_get_name() as $type => $name) {
-    $permissions['create ' . $type] = array(
+    $permissions['create ' . $type . ' products'] = array(
       'title' => t('Create %type products', array('%type' => $name)),
     );
-    $permissions['edit any ' . $type] = array(
+    $permissions['edit any ' . $type . ' product'] = array(
       'title' => t('Edit or delete any %type product', array('%type' => $name)),
     );
-    $permissions['edit own ' . $type] = array(
+    $permissions['edit own ' . $type . ' products'] = array(
       'title' => t('Edit or delete own %type products', array('%type' => $name)),
     );
   }
@@ -371,15 +366,6 @@ function _commerce_product_types_build() {
   asort($product_types->names);
 
   return $product_types;
-}
-
-/**
- * Checks if a product type is modified
- * TODO: Track status 'modified' in DB instead of comparing strings!
- */
-function commerce_product_type_modified($type) {
-  $stored_type = commerce_product_type_load($type);
-  
 }
 
 /**
@@ -641,17 +627,17 @@ function commerce_product_access($op, $product = NULL, $account = NULL) {
     return TRUE;
   }
 
-  if (isset($product) && is_string($product) && $op == 'create' && user_access('create ' . $product, $account)) {
+  if (isset($product) && is_string($product) && $op == 'create' && user_access('create ' . $product . ' products', $account)) {
     return TRUE;
   }
 
   if (isset($product) && ($op == 'update' || $op == 'delete')) {
-    if (user_access('edit any ' . $product->type, $account)) {
+    if (user_access('edit any ' . $product->type . ' product', $account)) {
       return TRUE;
     }
 
     // Others either don't have any access or must match the product uid.
-    if ($account->uid && user_access('edit own ' . $product->type, $account) && $product->uid == $account->uid) {
+    if ($account->uid && user_access('edit own ' . $product->type . ' products', $account) && $product->uid == $account->uid) {
       return TRUE;
     }
   }
@@ -868,7 +854,7 @@ function _commerce_product_match_products_standard($field, $string = '', $match 
 
   // Add a condition to the query to filter by matching product types.
   if (is_array($field['settings']['referenceable_types']) && !empty($field['settings']['referenceable_types'])) {
-    $types = array_diff(array_values($field['settings']['referenceable_types']), array(0));
+    $types = array_diff(array_values($field['settings']['referenceable_types']), array(0, NULL));
 
     // Only filter by type if some types have been specified.
     if (!empty($types)) {

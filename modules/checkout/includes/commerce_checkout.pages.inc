@@ -50,11 +50,6 @@ function commerce_checkout_form($form, &$form_state, $order, $checkout_page) {
   $form['#attached']['css'][] = drupal_get_path('module', 'commerce_checkout') .'/theme/commerce_checkout.css';
   $form['#attached']['js'][] = drupal_get_path('module', 'commerce_checkout') . '/commerce_checkout.js';
 
-  $form['uid'] = array(
-    '#type' => 'hidden',
-    '#value' => $user->uid,
-  );
-
   $form['account'] = array(
     '#type' => 'value',
     '#value' => clone($user),
@@ -72,7 +67,7 @@ function commerce_checkout_form($form, &$form_state, $order, $checkout_page) {
 
   // Add any instructions for the checkout page.
   $form['help'] = array(
-    '#markup' => filter_xss($checkout_page->help),
+    '#markup' => '<div class="checkout-help">' . filter_xss($checkout_page->help) . '</div>',
   );
 
   // Restore form errors.
@@ -93,8 +88,8 @@ function commerce_checkout_form($form, &$form_state, $order, $checkout_page) {
 
       // Create a fieldset for the pane and add the form data defined in the
       // pane's form callback.
-      $pane_values = isset($form_state['values'][$pane_id]) ? $form_state['values'][$pane_id] : array();
-      if ($pane_form = $callback($pane_values, $checkout_pane, $order)) {
+      // $pane_values = isset($form_state['values'][$pane_id]) ? $form_state['values'][$pane_id] : array();
+      if ($pane_form = $callback($form, $form_state, $checkout_pane, $order)) {
         $form[$pane_id] = $pane_form + array(
           '#type' => 'fieldset',
           '#title' => check_plain($checkout_pane->title),
@@ -186,7 +181,7 @@ function commerce_checkout_form_submit($form, &$form_state) {
     // If the pane has defined a checkout form validate handler...
     if ($callback = commerce_checkout_pane_callback($checkout_pane, 'checkout_form_validate')) {
       // Give it a chance to process the submitted data.
-      $validate = $callback($form[$pane_id], @$form_state['values'][$pane_id], $order);
+      $validate = $callback($form, $form_state, $checkout_pane, $order);
     }
 
     // Catch and clear panes' messages.
@@ -194,7 +189,7 @@ function commerce_checkout_form_submit($form, &$form_state) {
 
     // Submit the pane if it validated.
     if ($validate && $callback = commerce_checkout_pane_callback($checkout_pane, 'checkout_form_submit')) {
-      $callback($form[$pane_id], $form_state['values'][$pane_id], $order);
+      $callback($form, $form_state, $checkout_pane, $order);
     }
 
     // Generate status messages and theme them.

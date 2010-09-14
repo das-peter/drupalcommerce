@@ -23,6 +23,7 @@ files[] = includes/views/handlers/commerce_product_handler_field_product_link.in
 files[] = includes/views/handlers/commerce_product_handler_field_product_link_delete.inc
 files[] = includes/views/handlers/commerce_product_handler_field_product_link_edit.inc
 
+; Features API
 files[] = commerce_product.features_api.inc
 
 ; Simple tests

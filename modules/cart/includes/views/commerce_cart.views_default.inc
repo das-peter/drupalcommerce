@@ -49,7 +49,7 @@ function commerce_cart_views_default_views() {
     ),
     'entity_id' => array(
       'sortable' => 0,
-      'align' => '',
+      'align' => 'views-align-right',
       'separator' => '',
     ),
   );
@@ -60,6 +60,7 @@ function commerce_cart_views_default_views() {
   $handler->display->display_options['footer']['line_item_summary']['table'] = 'commerce_line_item';
   $handler->display->display_options['footer']['line_item_summary']['field'] = 'line_item_summary';
   $handler->display->display_options['footer']['line_item_summary']['links'] = array(
+    'view_cart' => 'view_cart',
     'checkout' => 'checkout',
   );
   /* Relationship: Fields: Referenced line item */
@@ -178,7 +179,7 @@ function commerce_cart_views_default_views() {
     ),
     'entity_id' => array(
       'sortable' => 0,
-      'align' => '',
+      'align' => 'views-align-right',
       'separator' => '',
     ),
   );
