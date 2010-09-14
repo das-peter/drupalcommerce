@@ -11,7 +11,7 @@ function commerce_product_features_api() {
   return array(
   'commerce_product' => array(
     'name' => t('Commerce Products'),
-    'default_hook' => 'field_default_fields',
+    'default_hook' => 'commerce_product_info',
     'default_file' => FEATURES_DEFAULTS_INCLUDED,
     'features_source' => TRUE,
     )
@@ -88,16 +88,24 @@ function commerce_product_features_revert($module) {
     $default_types = module_invoke($module, 'commerce_product_info');
     foreach ($default_types as $type) {
       db_delete('commerce_product_type')
-    ->condition('type', $type->type)
-  ->execute();
+      ->condition('type', $type->type)
+      ->execute();
     }
   }
   else {
     drupal_set_message(t('Could not load default product types.'), 'error');
     return FALSE;
   }
-  
+
   commerce_product_types_rebuild();
   menu_rebuild();
-  return TRUE;  
+  return TRUE;
+}
+
+
+/**
+ * Implementation of hook_features_rebuild().
+ */
+function commerce_product_features_rebuild($module) {
+  return commerce_product_features_revert($module);
 }
