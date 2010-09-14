@@ -1,4 +1,4 @@
-; $Id: commerce_product_ui.info,v 1.13 2010/06/03 18:08:21 rszrama Exp $
+; $Id$
 name = Product UI
 description = Exposes a default UI for Products through product edit forms and default Views.
 package = Drupal Commerce UI

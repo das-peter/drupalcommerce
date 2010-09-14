@@ -1,4 +1,4 @@
-; $Id: commerce_line_item.info,v 1.10 2010/08/12 01:20:54 rszrama Exp $
+; $Id$
 name = Line Item
 description = Defines the Line Item entity and associated features.
 package = Drupal Commerce

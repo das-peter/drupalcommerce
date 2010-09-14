@@ -1,4 +1,4 @@
-; $Id: commerce_order_ui.info,v 1.5 2010/06/03 18:08:21 rszrama Exp $
+; $Id$
 name = Order UI
 description = Exposes a default UI for Orders through order edit forms and default Views.
 package = Drupal Commerce UI

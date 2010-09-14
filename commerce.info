@@ -1,4 +1,4 @@
-; $Id: commerce.info,v 1.12 2010/06/03 18:08:21 rszrama Exp $
+; $Id$
 name = Commerce
 description = Defines features and functions common to the Commerce modules.
 package = Drupal Commerce
