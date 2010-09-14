@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_order.views.inc,v 1.11 2010/08/09 21:13:26 rszrama Exp $
+// $Id$
 
 /**
  * Export Drupal Commerce orders to Views.

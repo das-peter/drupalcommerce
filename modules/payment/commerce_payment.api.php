@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_payment.api.php,v 1.3 2010/08/09 21:13:34 rszrama Exp $
+// $Id$
 
 /**
  * @file

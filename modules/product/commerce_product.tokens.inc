@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_product.tokens.inc,v 1.7 2010/08/12 01:20:46 rszrama Exp $
+// $Id$
 
 /**
  * @file

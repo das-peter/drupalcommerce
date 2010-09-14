@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_order_handler_field_order_link_delete.inc,v 1.1 2010/06/09 19:24:13 rszrama Exp $
+// $Id$
 
 /**
  * Field handler to present a link to delete an order.

@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_line_item.views.inc,v 1.12 2010/08/12 01:20:54 rszrama Exp $
+// $Id$
 
 /**
  * Export Drupal Commerce line items to Views.

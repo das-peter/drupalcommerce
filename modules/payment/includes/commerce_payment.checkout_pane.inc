@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_payment.checkout_pane.inc,v 1.8 2010/08/12 01:20:12 rszrama Exp $
+// $Id$
 
 /**
  * @file

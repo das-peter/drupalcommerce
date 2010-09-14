@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_line_item_handler_filter_line_item_type.inc,v 1.1 2010/07/19 20:40:56 rszrama Exp $
+// $Id$
 
 /**
  * Filter by line item type

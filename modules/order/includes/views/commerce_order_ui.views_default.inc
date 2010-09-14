@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_order_ui.views_default.inc,v 1.7 2010/06/09 19:23:26 rszrama Exp $
+// $Id$
 
 /**
  * Views for the default order UI.

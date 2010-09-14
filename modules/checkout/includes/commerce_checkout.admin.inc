@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_checkout.admin.inc,v 1.14 2010/07/14 01:43:07 rszrama Exp $
+// $Id$
 
 /**
  * @file

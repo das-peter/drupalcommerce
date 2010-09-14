@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce-cart-block.tpl.php,v 1.4 2010/08/12 01:20:54 rszrama Exp $
+// $Id$
 
 /**
  * @file

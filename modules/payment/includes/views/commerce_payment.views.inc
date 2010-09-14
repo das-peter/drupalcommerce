@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_payment.views.inc,v 1.2 2010/07/19 18:38:42 rszrama Exp $
+// $Id$
 
 /**
  * Export Drupal Commerce Payment transactions to Views.

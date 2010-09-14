@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_payment.rules.inc,v 1.3 2010/08/09 21:13:51 rszrama Exp $
+// $Id$
 
 /**
  * @file

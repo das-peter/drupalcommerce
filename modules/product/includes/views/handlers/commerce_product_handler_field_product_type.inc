@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_product_handler_field_product_type.inc,v 1.1 2010/07/12 13:15:29 rszrama Exp $
+// $Id$
 
 /**
  * Field handler to translate a product type into its readable form.

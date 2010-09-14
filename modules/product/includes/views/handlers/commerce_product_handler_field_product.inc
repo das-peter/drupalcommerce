@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_product_handler_field_product.inc,v 1.1 2010/07/12 13:15:03 rszrama Exp $
+// $Id$
 
 /**
  * @file

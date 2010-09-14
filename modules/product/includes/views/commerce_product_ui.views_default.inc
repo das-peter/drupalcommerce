@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_product_ui.views_default.inc,v 1.14 2010/07/12 13:14:31 rszrama Exp $
+// $Id$
 
 /**
  * Views for the default product UI.

@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_payment_handler_field_status.inc,v 1.1 2010/07/12 13:17:13 rszrama Exp $
+// $Id$
 
 /**
  * Field handler for the payment transaction status.

@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_line_item_handler_area_line_item_summary.inc,v 1.2 2010/08/12 01:21:17 rszrama Exp $
+// $Id$
 
 /**
  * Defines a line item summary area handler so the summary can be plugged into

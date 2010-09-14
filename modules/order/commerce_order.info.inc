@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_order.info.inc,v 1.4 2010/07/12 14:16:08 rszrama Exp $
+// $Id$
 
 /**
  * @file

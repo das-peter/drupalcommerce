@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_cart.views_default.inc,v 1.10 2010/08/12 01:21:17 rszrama Exp $
+// $Id$
 
 /**
  * Views for the shopping cart.

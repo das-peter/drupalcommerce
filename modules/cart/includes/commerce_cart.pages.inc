@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_cart.pages.inc,v 1.3 2010/07/12 13:18:34 rszrama Exp $
+// $Id$
 
 /**
  * @file

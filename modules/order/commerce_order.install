@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_order.install,v 1.8 2010/07/12 13:17:52 rszrama Exp $
+// $Id$
 
 /**
  * Implements hook_schema().

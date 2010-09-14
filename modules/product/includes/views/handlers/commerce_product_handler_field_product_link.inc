@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_product_handler_field_product_link.inc,v 1.1 2010/06/09 19:24:13 rszrama Exp $
+// $Id$
 
 /**
  * Field handler to present a link to a product.

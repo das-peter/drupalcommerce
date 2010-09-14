@@ -1,5 +1,5 @@
 <?php
-// $Id: commerce_product.rules.inc,v 1.3 2010/05/20 04:08:50 rszrama Exp $
+// $Id$
 
 /**
  * @file
