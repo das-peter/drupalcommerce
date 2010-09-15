@@ -178,6 +178,7 @@ function commerce_product_hook_info() {
       'group' => 'commerce_product',
     );
   }
+  $hooks['features_api'] = array('group' => 'features_api');
   return $hooks;
 }
 
@@ -230,7 +231,7 @@ function commerce_product_type_save($product_type) {
     // Notify other modules that an existing product type has been updated.
     module_invoke_all('commerce_product_type_update', $product_type);
   }
-  
+
   // Clear the product type cache.
   drupal_static_reset('_commerce_product_types_build');
 
@@ -262,7 +263,7 @@ function commerce_product_type_delete($type) {
 
   // Rebuild the menu to get rid of this type's product add menu item.
   menu_rebuild();
-  
+
   // Clear the product type cache.
   drupal_static_reset('_commerce_product_types_build');
 
@@ -298,14 +299,14 @@ function _commerce_product_extract_type($type) {
  *
  * All new module-defined product types are saved to the database via a call to
  * commerce_product_type_save()
- * 
+ *
  * TODO: Obsolete ones are deleted via a call to commerce_product_type_delete().
- * Obsolete/Disabled flag will be added in _commerce_product_types_build() 
+ * Obsolete/Disabled flag will be added in _commerce_product_types_build()
  */
 function commerce_product_types_rebuild() {
   // Reset and load updated product types.
   drupal_static_reset('_commerce_product_types_build');
-   
+
   foreach (commerce_product_types() as $type) {
     $existing = commerce_product_type_load($type->type);
     if (empty($existing)) {
@@ -339,7 +340,7 @@ function _commerce_product_types_build() {
     return $product_types;
   }
   $product_types = (object)array('types' => array(), 'names' => array());
-  
+
   // Build product_types from modules that implement commerce_product_info().
   $module_product_types = module_invoke_all('commerce_product_info');
   if (count($module_product_types) > 0) {
@@ -348,7 +349,7 @@ function _commerce_product_types_build() {
       $product_types->names[$type->type] = $type->name;
     }
   }
- 
+
   // Get product types from DB and add them to the product types array defined by hook_commerce_product_info()
   // if they don't exist yet. Product types provided by the hook will override/update product types in the DB.
   // However, the machine-readable name (type) will stay the same, only metadata is affected.
