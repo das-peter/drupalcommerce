@@ -51,7 +51,7 @@ class CommerceOrderEntityController extends EntityAPIController {
    *   The saved order object on success, FALSE on failure.
    */
   public function save($order) {
-    $transaction = db_transaction();
+    $transaction = db_transaction('Saves an order');
 
     try {
       global $user;
@@ -171,8 +171,8 @@ class CommerceOrderEntityController extends EntityAPIController {
     }
     catch (Exception $e) {
       $transaction->rollback();
-      watchdog_exception('commerce order', $e, array($order), WATCHDOG_ERROR);
-      return FALSE;
+      watchdog_exception('Saves an order', $e);
+      throw $e;
     }
   }
 
@@ -220,7 +220,7 @@ class CommerceOrderEntityController extends EntityAPIController {
     if (!empty($order_ids)) {
       $orders = $this->load($order_ids, array());
 
-      $transaction = db_transaction();
+      $transaction = db_transaction('Delete orders');
 
       try {
         // Loop through the orders to delete.
@@ -244,8 +244,8 @@ class CommerceOrderEntityController extends EntityAPIController {
       }
       catch (Exception $e) {
         $transaction->rollback();
-        watchdog_exception('commerce order', $e, array($order_ids), WATCHDOG_ERROR);
-        return FALSE;
+        watchdog_exception('Delete orders', $e);
+        throw $e;
       }
 
       // Clear the page and block and order_load_multiple caches.

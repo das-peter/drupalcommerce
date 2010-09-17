@@ -44,7 +44,7 @@ class CommerceProductEntityController extends DrupalDefaultEntityController {
    *   The saved product object on success, FALSE on failure.
    */
   public function save($product) {
-    $transaction = db_transaction();
+    $transaction = db_transaction('Saves a product');
 
     try {
       $product->changed = REQUEST_TIME;
@@ -92,8 +92,8 @@ class CommerceProductEntityController extends DrupalDefaultEntityController {
     }
     catch (Exception $e) {
       $transaction->rollback();
-      watchdog_exception('commerce product', $e, array($product), WATCHDOG_ERROR);
-      return FALSE;
+      watchdog_exception('Saves a product', $e);
+      throw $e;
     }
   }
 
@@ -113,7 +113,7 @@ class CommerceProductEntityController extends DrupalDefaultEntityController {
       // TODO: We'll need to ensure products on orders cannot be deleted when we
       // have orders implemented.
 
-      $transaction = db_transaction();
+      $transaction = db_transaction('Delete products');
 
       try {
         db_delete('commerce_product')
@@ -132,8 +132,8 @@ class CommerceProductEntityController extends DrupalDefaultEntityController {
       }
       catch (Exception $e) {
         $transaction->rollback();
-        watchdog_exception('commerce product', $e, array($product_ids), WATCHDOG_ERROR);
-        return FALSE;
+        watchdog_exception('Delete products', $e);
+        throw $e;
       }
 
       // Clear the page and block and product_load_multiple caches.

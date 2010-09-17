@@ -42,7 +42,7 @@ class CommerceLineItemEntityController extends DrupalDefaultEntityController {
    *   The saved line item object on success, FALSE on failure.
    */
   public function save($line_item) {
-    $transaction = db_transaction();
+    $transaction = db_transaction('Saves a line item');
 
     try {
       $line_item->changed = REQUEST_TIME;
@@ -96,8 +96,8 @@ class CommerceLineItemEntityController extends DrupalDefaultEntityController {
     }
     catch (Exception $e) {
       $transaction->rollback();
-      watchdog_exception('commerce line item', $e, array($line_item), WATCHDOG_ERROR);
-      return FALSE;
+      watchdog_exception('Saves a line item', $e);
+      throw $e;
     }
   }
 
@@ -114,7 +114,7 @@ class CommerceLineItemEntityController extends DrupalDefaultEntityController {
     if (!empty($line_item_ids)) {
       $line_items = $this->load($line_item_ids, array());
 
-      $transaction = db_transaction();
+      $transaction = db_transaction('Delete line items');
 
       try {
         db_delete('commerce_line_item')
@@ -132,8 +132,9 @@ class CommerceLineItemEntityController extends DrupalDefaultEntityController {
         db_ignore_slave();
       }
       catch (Exception $e) {
-        watchdog_exception('commerce line item', $e, array($line_item_ids), WATCHDOG_ERROR);
-        return FALSE;
+        $transaction->rollback();
+        watchdog_exception('Delete line items', $e);
+        throw $e;
       }
 
       // Clear the page and block and line_item_load_multiple caches.

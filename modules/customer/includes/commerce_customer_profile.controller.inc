@@ -50,7 +50,7 @@ class CommerceCustomerProfileEntityController extends DrupalDefaultEntityControl
    *   The saved customer profile object on success, FALSE on failure.
    */
   public function save($profile) {
-    $transaction = db_transaction();
+    $transaction = db_transaction('Saves a customer profile');
 
     try {
       global $user;
@@ -162,8 +162,8 @@ class CommerceCustomerProfileEntityController extends DrupalDefaultEntityControl
     }
     catch (Exception $e) {
       $transaction->rollback();
-      watchdog_exception('commerce customer profile', $e, array($profile), WATCHDOG_ERROR);
-      return FALSE;
+      watchdog_exception('Saves a customer profile', $e);
+      throw $e;
     }
   }
 
@@ -214,7 +214,7 @@ class CommerceCustomerProfileEntityController extends DrupalDefaultEntityControl
       // TODO: We'll need to ensure profiles on orders cannot be deleted when we
       // have orders implemented.
 
-      $transaction = db_transaction();
+      $transaction = db_transaction('Delete customer profiles');
 
       try {
         db_delete('commerce_customer_profile')
@@ -233,8 +233,8 @@ class CommerceCustomerProfileEntityController extends DrupalDefaultEntityControl
       }
       catch (Exception $e) {
         $transaction->rollback();
-        watchdog_exception('commerce customer profile', $e, array($profile_ids), WATCHDOG_ERROR);
-        return FALSE;
+        watchdog_exception('Delete customer profiles', $e);
+        throw $e;
       }
 
       // Clear the page and block and customer_profile_load_multiple caches.
