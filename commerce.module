@@ -226,6 +226,30 @@ function commerce_currencies($enabled = FALSE) {
         'fraction_name' => t('Cent'),
         'symbol_placement' => 'before',
       ),
+      'CHF' => array (
+        'numeric_code' => 756,
+        'code' => 'CHF',
+        'name' => t('Swiss franc'),
+        'symbol' => 'CHF',
+        'fraction_name' => t('Rappen'),
+        'symbol_placement' => 'after',
+      ),
+      'GBP' => array (
+        'numeric_code' => 826,
+        'code' => '£',
+        'name' => t('Pound sterling'),
+        'symbol' => 'GBP',
+        'fraction_name' => t('Pence'),
+        'symbol_placement' => 'after',
+      ),
+      'JPY' => array (
+        'numeric_code' => 392,
+        'code' => '¥',
+        'name' => t('Japanese yen'),
+        'symbol' => 'JPY',
+        'fraction_name' => t('Pence'),
+        'symbol_placement' => 'after',
+      ),
     );
 
     // Add default values if they don't exist and convert to objects.

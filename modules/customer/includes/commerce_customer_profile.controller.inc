@@ -161,7 +161,8 @@ class CommerceCustomerProfileEntityController extends DrupalDefaultEntityControl
       return $profile;
     }
     catch (Exception $e) {
-      $transaction->rollback('commerce customer profile', $e->getMessage(), array(), WATCHDOG_ERROR);
+      $transaction->rollback();
+      watchdog_exception('commerce customer profile', $e, array($profile), WATCHDOG_ERROR);
       return FALSE;
     }
   }
@@ -231,7 +232,8 @@ class CommerceCustomerProfileEntityController extends DrupalDefaultEntityControl
         db_ignore_slave();
       }
       catch (Exception $e) {
-        $transaction->rollback('commerce customer profile', $e->getMessage(), array(), WATCHDOG_ERROR);
+        $transaction->rollback();
+        watchdog_exception('commerce customer profile', $e, array($profile_ids), WATCHDOG_ERROR);
         return FALSE;
       }
 

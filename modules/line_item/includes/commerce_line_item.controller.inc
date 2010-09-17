@@ -95,7 +95,8 @@ class CommerceLineItemEntityController extends DrupalDefaultEntityController {
       return $line_item;
     }
     catch (Exception $e) {
-      $transaction->rollback('commerce line item', $e->getMessage(), array(), WATCHDOG_ERROR);
+      $transaction->rollback();
+      watchdog_exception('commerce line item', $e, array($line_item), WATCHDOG_ERROR);
       return FALSE;
     }
   }
@@ -131,7 +132,7 @@ class CommerceLineItemEntityController extends DrupalDefaultEntityController {
         db_ignore_slave();
       }
       catch (Exception $e) {
-        $transaction->rollback('commerce line item', $e->getMessage(), array(), WATCHDOG_ERROR);
+        watchdog_exception('commerce line item', $e, array($line_item_ids), WATCHDOG_ERROR);
         return FALSE;
       }
 

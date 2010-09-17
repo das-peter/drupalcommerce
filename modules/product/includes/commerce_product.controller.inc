@@ -91,7 +91,8 @@ class CommerceProductEntityController extends DrupalDefaultEntityController {
       return $product;
     }
     catch (Exception $e) {
-      $transaction->rollback('commerce product', $e->getMessage(), array(), WATCHDOG_ERROR);
+      $transaction->rollback();
+      watchdog_exception('commerce product', $e, array($product), WATCHDOG_ERROR);
       return FALSE;
     }
   }
@@ -130,7 +131,8 @@ class CommerceProductEntityController extends DrupalDefaultEntityController {
         db_ignore_slave();
       }
       catch (Exception $e) {
-        $transaction->rollback('commerce product', $e->getMessage(), array(), WATCHDOG_ERROR);
+        $transaction->rollback();
+        watchdog_exception('commerce product', $e, array($product_ids), WATCHDOG_ERROR);
         return FALSE;
       }
 

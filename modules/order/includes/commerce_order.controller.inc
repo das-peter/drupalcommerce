@@ -170,7 +170,8 @@ class CommerceOrderEntityController extends EntityAPIController {
       return $order;
     }
     catch (Exception $e) {
-      $transaction->rollback('commerce order', $e->getMessage(), array(), WATCHDOG_ERROR);
+      $transaction->rollback();
+      watchdog_exception('commerce order', $e, array($order), WATCHDOG_ERROR);
       return FALSE;
     }
   }
@@ -242,7 +243,8 @@ class CommerceOrderEntityController extends EntityAPIController {
         db_ignore_slave();
       }
       catch (Exception $e) {
-        $transaction->rollback('commerce order', $e->getMessage(), array(), WATCHDOG_ERROR);
+        $transaction->rollback();
+        watchdog_exception('commerce order', $e, array($order_ids), WATCHDOG_ERROR);
         return FALSE;
       }
 
