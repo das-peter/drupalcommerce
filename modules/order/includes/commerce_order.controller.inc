@@ -48,7 +48,7 @@ class CommerceOrderEntityController extends EntityAPIController {
    *   The full order object to save.
    *
    * @return
-   *   The saved order object on success, FALSE on failure.
+   *   The saved order object.
    */
   public function save($order) {
     $transaction = db_transaction('Saves an order');
@@ -171,7 +171,7 @@ class CommerceOrderEntityController extends EntityAPIController {
     }
     catch (Exception $e) {
       $transaction->rollback();
-      watchdog_exception('Saves an order', $e);
+      watchdog_exception('commerce_order', $e);
       throw $e;
     }
   }
@@ -244,7 +244,7 @@ class CommerceOrderEntityController extends EntityAPIController {
       }
       catch (Exception $e) {
         $transaction->rollback();
-        watchdog_exception('Delete orders', $e);
+        watchdog_exception('commerce_order', $e);
         throw $e;
       }
 

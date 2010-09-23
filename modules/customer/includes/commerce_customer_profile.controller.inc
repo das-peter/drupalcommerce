@@ -47,7 +47,7 @@ class CommerceCustomerProfileEntityController extends DrupalDefaultEntityControl
    *   The full customer profile object to save.
    *
    * @return
-   *   The saved customer profile object on success, FALSE on failure.
+   *   The saved customer profile object.
    */
   public function save($profile) {
     $transaction = db_transaction('Saves a customer profile');
@@ -162,7 +162,7 @@ class CommerceCustomerProfileEntityController extends DrupalDefaultEntityControl
     }
     catch (Exception $e) {
       $transaction->rollback();
-      watchdog_exception('Saves a customer profile', $e);
+      watchdog_exception('commerce_customer', $e);
       throw $e;
     }
   }
@@ -233,7 +233,7 @@ class CommerceCustomerProfileEntityController extends DrupalDefaultEntityControl
       }
       catch (Exception $e) {
         $transaction->rollback();
-        watchdog_exception('Delete customer profiles', $e);
+        watchdog_exception('commerce_customer', $e);
         throw $e;
       }
 

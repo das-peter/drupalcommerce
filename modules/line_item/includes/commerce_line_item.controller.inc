@@ -39,7 +39,7 @@ class CommerceLineItemEntityController extends DrupalDefaultEntityController {
    *   The full line item object to save.
    *
    * @return
-   *   The saved line item object on success, FALSE on failure.
+   *   The saved line item object.
    */
   public function save($line_item) {
     $transaction = db_transaction('Saves a line item');
@@ -96,7 +96,7 @@ class CommerceLineItemEntityController extends DrupalDefaultEntityController {
     }
     catch (Exception $e) {
       $transaction->rollback();
-      watchdog_exception('Saves a line item', $e);
+      watchdog_exception('commerce_line_item', $e);
       throw $e;
     }
   }
@@ -133,7 +133,7 @@ class CommerceLineItemEntityController extends DrupalDefaultEntityController {
       }
       catch (Exception $e) {
         $transaction->rollback();
-        watchdog_exception('Delete line items', $e);
+        watchdog_exception('commerce_line_item', $e);
         throw $e;
       }
 
