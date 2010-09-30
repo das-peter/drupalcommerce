@@ -1,0 +1,24 @@
+/* $Id$ */
+
+.payment-totals-table {
+  width: 33%;
+  float: right;
+}
+
+.payment-totals-table tr.order-balance {
+  background-color: #D3E9F4;
+  font-weight: bold;
+}
+
+.payment-totals-table .total,
+.payment-totals-table .balance {
+  text-align: right;
+}
+
+.add-payment .form-item-payment-method {
+  display: inline;
+}
+
+.views-field-operations .links.operations {
+  text-transform: lowercase;
+}

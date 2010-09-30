@@ -6,6 +6,103 @@
  * Defines the payment system and checkout integration.
  */
 
+
+// Local payment transaction status definitions:
+
+// Pending is used when a transaction has been initialized but is still awaiting
+// resolution; e.g. a CC authorization awaiting capture or an e-check payment
+// pending at the payment provider.
+define('COMMERCE_PAYMENT_STATUS_PENDING', 'pending');
+
+// Success is used when a transaction has completed resulting in money being
+// transferred from the customer to the store or vice versa.
+define('COMMERCE_PAYMENT_STATUS_SUCCESS', 'success');
+
+// Failure is used when a transaction cannot be completed or is rejected.
+define('COMMERCE_PAYMENT_STATUS_FAILURE', 'failure');
+
+/**
+ * Implements of hook_entity_info().
+ */
+function commerce_payment_entity_info() {
+  $return = array(
+    'commerce_payment_transaction' => array(
+      'label' => t('Payment transaction'),
+      'controller class' => 'CommercePaymentTransactionEntityController',
+      'base table' => 'commerce_payment_transaction',
+      'revision table' => 'commerce_payment_transaction_revision',
+      'fieldable' => FALSE,
+      'entity keys' => array(
+        'id' => 'transaction_id',
+        'revision' => 'revision_id',
+        'bundle' => 'payment_method',
+      ),
+      'bundle keys' => array(
+        'bundle' => 'payment_method',
+      ),
+      'bundles' => array(),
+      'load hook' => 'commerce_payment_transaction_load',
+      'view modes' => array(
+        'display' => array(
+          'label' => t('Display'),
+          'custom settings' => FALSE,
+        ),
+      ),
+      'creation callback' => '_commerce_payment_transaction_create',
+      'save callback' => 'commerce_payment_transaction_save',
+      'deletion callback' => 'commerce_payment_transaction_delete',
+      'access callback' => 'commerce_payment_transaction_access',
+    ),
+  );
+
+  foreach (commerce_payment_methods() as $method_id => $payment_method) {
+    $return['commerce_payment_transaction']['bundles'][$method_id] = array(
+      'label' => $payment_method->title,
+    );
+  }
+
+  return $return;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function commerce_payment_permission() {
+  return array(
+    'administer payments' => array(
+      'title' => t('Administer payments'),
+      'description' => t('Allows users to perform any payment action for any order.'),
+      'restrict access' => TRUE,
+    ),
+  );
+}
+
+/**
+ * Implements hook_theme().
+ */
+function commerce_payment_theme() {
+  return array(
+    'commerce_payment_transaction_status_text' => array(
+      'variables' => array('text' => NULL, 'status' => NULL),
+    ),
+    'commerce_payment_transaction_status_icon' => array(
+      'variables' => array('status' => NULL),
+    ),
+    'commerce_payment_totals' => array(
+      'variables' => array('rows' => array(), 'form' => NULL, 'totals' => array(), 'view' => NULL),
+      'path' => drupal_get_path('module', 'commerce_payment') . '/theme',
+      'template' => 'commerce-payment-totals',
+    ),
+  );
+}
+
+/**
+ * Adds the necessary CSS for the line item summary template.
+ */
+function template_preprocess_commerce_payment_totals(&$variables) {
+  drupal_add_css(drupal_get_path('module', 'commerce_payment') . '/theme/commerce_payment_views.css');
+}
+
 /**
  * Implements hook_commerce_checkout_page_info().
  */
@@ -84,7 +181,25 @@ function commerce_payment_methods() {
         'callbacks' => array(),
       );
 
-      $payment_methods[$method_id] = (object) ((array) $payment_method + $defaults);
+      $payment_method = (object) ((array) $payment_method + $defaults);
+
+      // Default the display title to the title if necessary.  The display title
+      // is used in instances where the payment method has an official name used
+      // as the title (i.e. PayPal WPS) but a different method of display on
+      // selection forms (like some text and a set of images).
+      if (empty($payment_method->display_title)) {
+        $payment_method->display_title = $payment_method->title;
+      }
+
+      // Default the short title to the title if necessary.  Like the display
+      // title, the short title is an alternate way of displaying the title to
+      // the user consisting of plain text but with unnecessary information
+      // stripped off.  The payment method title might be PayPal WPS as it
+      // distinguishes itself from other PayPal payment services, but you would
+      // only want to display PayPal to the customer as their means of payment.
+      if (empty($payment_methods[$method_id]->short_title)) {
+        $payment_method->short_title = $payment_method->title;
+      }
 
       // Merge in default callbacks.
       foreach (array('settings', 'submit_form', 'submit_form_validate', 'submit_form_submit', 'redirect_form', 'redirect_form_validate', 'redirect_form_submit') as $callback) {
@@ -148,4 +263,239 @@ function commerce_payment_method_instance_load($instance_id) {
   }
 
   return $payment_method;
+}
+
+/**
+ * Returns an array of transaction payment status objects for the defined
+ *   payment statuses.
+ *
+ * This function invokes hook_commerce_payment_transaction_status_info() so
+ * other payment modules can define statuses if necessary. However, it doesn't
+ * allow for altering so that existing payment methods cannot be unset. It still
+ * does perform an array merge in such a way that the properties for the three
+ * core statuses defined by this module may be overridden if the same keys are
+ * used in another module's implementation of the info hook.
+ */
+function commerce_payment_transaction_statuses() {
+  $statuses = &drupal_static(__FUNCTION__);
+
+  // If the statuses haven't been defined yet, do so now.
+  if (!isset($statuses)) {
+    $statuses = module_invoke_all('commerce_payment_transaction_status_info');
+
+    $statuses += array(
+      COMMERCE_PAYMENT_STATUS_PENDING => (object) array(
+        'status' => COMMERCE_PAYMENT_STATUS_PENDING,
+        'title' => t('Pending'),
+        'icon' => '',
+        'total' => FALSE,
+      ),
+      COMMERCE_PAYMENT_STATUS_SUCCESS => (object) array(
+        'status' => COMMERCE_PAYMENT_STATUS_SUCCESS,
+        'title' => t('Success'),
+        'icon' => drupal_get_path('module', 'commerce_payment') . '/theme/icon-success.png',
+        'total' => TRUE,
+      ),
+      COMMERCE_PAYMENT_STATUS_FAILURE => (object) array(
+        'status' => COMMERCE_PAYMENT_STATUS_FAILURE,
+        'title' => t('Failure'),
+        'icon' => drupal_get_path('module', 'commerce_payment') . '/theme/icon-failure.png',
+        'total' => FALSE,
+      ),
+    );
+  }
+
+  return $statuses;
+}
+
+/**
+ * Themes the icon representing a payment transaction status.
+ */
+function theme_commerce_payment_transaction_status_icon($variables) {
+  $status = $variables['status'];
+
+  return '<img src="' . url($status->icon, array('absolute' => TRUE)) . '" class="' . drupal_html_class($status->status) . '" title="' . $status->title . '" alt="' . $status->title . '" />';
+}
+
+/**
+ * Themes a text value related to a payment transaction status.
+ */
+function theme_commerce_payment_transaction_status_text($variables) {
+  $status = $variables['status'];
+
+  return '<span class="' . drupal_html_class($status->status) . '">' . $variables['text'] . '</span>';
+}
+
+/**
+ * Returns the payment transaction status object for the specified status.
+ *
+ * @param $status
+ *   The transaction status string.
+ *
+ * @return
+ *   An object containing the transaction status information or FALSE if the
+ *     requested status is not found.
+ */
+function commerce_payment_transaction_status_load($status) {
+  $statuses = commerce_payment_transaction_statuses();
+  return !empty($statuses[$status]) ? $statuses[$status] : FALSE;
+}
+
+/**
+ * Returns an initialized payment transaction object.
+ *
+ * @param $method_id
+ *   The method_id of the payment method for the transaction.
+ *
+ * @return
+ *   A transaction object with all default fields initialized.
+ */
+function commerce_payment_transaction_new($method_id = '') {
+  return entity_get_controller('commerce_payment_transaction')->create($method_id);
+}
+
+/**
+ * Creation callback for the Entity Metadata module.
+ */
+function _commerce_payment_transaction_create($values = array()) {
+  // Create a new transaction of the specified type.
+  $transaction = commerce_payment_transaction_new($values['method_id']);
+  unset($values['method_id']);
+
+  $wrapper = entity_metadata_wrapper('commerce_payment_transaction', $transaction);
+
+  foreach ($values as $name => $value) {
+    $wrapper->$name->set($value);
+  }
+
+  return $wrapper;
+}
+
+/**
+ * Saves a payment transaction.
+ *
+ * @param $transaction
+ *   The full transaction object to save.
+ *
+ * @return
+ *   The saved transaction object.
+ */
+function commerce_payment_transaction_save($transaction) {
+  return entity_get_controller('commerce_payment_transaction')->save($transaction);
+}
+
+/**
+ * Loads a payment transaction by ID.
+ */
+function commerce_payment_transaction_load($transaction_id) {
+  $transactions = commerce_payment_transaction_load_multiple(array($transaction_id), array());
+  return $transactions ? reset($transactions) : FALSE;
+}
+
+/**
+ * Loads multiple payment transaction by ID or based on a set of matching conditions.
+ *
+ * @see entity_load()
+ *
+ * @param $transaction_ids
+ *   An array of transaction IDs.
+ * @param $conditions
+ *   An array of conditions on the {commerce_payment_transaction} table in the
+ *     form 'field' => $value.
+ * @param $reset
+ *   Whether to reset the internal transaction loading cache.
+ *
+ * @return
+ *   An array of transaction objects indexed by transaction_id.
+ */
+function commerce_payment_transaction_load_multiple($transaction_ids = array(), $conditions = array(), $reset = FALSE) {
+  return entity_load('commerce_payment_transaction', $transaction_ids, $conditions, $reset);
+}
+
+/**
+ * Deletes a payment transaction by ID.
+ *
+ * @param $transaction_id
+ *   The ID of the transaction to delete.
+ *
+ * @return
+ *   TRUE on success, FALSE otherwise.
+ */
+function commerce_payment_transaction_delete($transaction_id) {
+  return commerce_payment_transaction_delete_multiple(array($transaction_id));
+}
+
+/**
+ * Deletes multiple payment transactions by ID.
+ *
+ * @param $transaction_ids
+ *   An array of transaction IDs to delete.
+ *
+ * @return
+ *   TRUE on success, FALSE otherwise.
+ */
+function commerce_payment_transaction_delete_multiple($transaction_ids) {
+  return entity_get_controller('commerce_payment_transaction')->delete($transaction_ids);
+}
+
+/**
+ * Handler to load the unchanged line item variable for rules.
+ *
+ * @see commerce_payment_rules_variables().
+ */
+function commerce_payment_transaction_rules_var_unchanged($transaction) {
+  $unchanged = drupal_static('commerce_payment_transaction_unchanged');
+
+  if (isset($transaction->transaction_id) && isset($unchanged[$transaction->transaction_id])) {
+    return $unchanged[$transaction->transaction_id];
+  }
+}
+
+/**
+ * Calculates the balance of an order by subtracting the total of all successful
+ *   transactions from the total of all the line items on the order.
+ *
+ * @param $order
+ *   The fully loaded order object whose balance should be calculated.
+ * @param $totals
+ *   Optionally submit an array of transaction totals keyed by currency code
+ *     with the amount as the value.
+ *
+ * @return
+ *   An array containing the amount and currency code representing the balance
+ *     of the order or FALSE if it is impossible to calculate.
+ */
+function commerce_payment_order_balance($order, $totals = array()) {
+  $order_total = commerce_line_items_total($order->line_items);
+
+  // Calculate the transaction totals if not supplied.
+  if (empty($totals)) {
+    $statuses = commerce_payment_transaction_statuses();
+
+    foreach (commerce_payment_transaction_load_multiple(array(), array('order_id' => $order->order_id)) as $transaction) {
+      // If the payment transaction status indicates it should include the
+      // current transaction in the total...
+      if ($statuses[$transaction->status]->total) {
+        // Add the transaction to its currency's running total if it exists...
+        if (isset($totals[$transaction->currency_code])) {
+          $totals[$transaction->currency_code] += $transaction->amount;
+        }
+        else {
+          // Or begin a new running total for the currency.
+          $totals[$transaction->currency_code] = $transaction->amount;
+        }
+      }
+    }
+  }
+
+  // Only return a balance if the totals array contains a single matching currency.
+  if (count($totals) == 1 && isset($totals[$order_total['currency_code']])) {
+    return array('amount' => $order_total['price'] - $totals[$order_total['currency_code']], 'currency_code' => $order_total['currency_code']);
+  }
+  elseif (empty($totals)) {
+    return array('amount' => $order_total['price'], 'currency_code' => $order_total['currency_code']);
+  }
+  else {
+    return FALSE;
+  }
 }
