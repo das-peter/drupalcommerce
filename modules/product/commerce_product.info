@@ -24,7 +24,7 @@ files[] = includes/views/handlers/commerce_product_handler_field_product_link_de
 files[] = includes/views/handlers/commerce_product_handler_field_product_link_edit.inc
 
 ; Features API
-files[] = commerce_product.features_api.inc
+files[] = commerce_product.features.inc
 
 ; Simple tests
 files[] = tests/commerce_product.test

@@ -178,7 +178,6 @@ function commerce_product_hook_info() {
       'group' => 'commerce_product',
     );
   }
-  $hooks['features_api'] = array('group' => 'features_api');
   return $hooks;
 }
 
