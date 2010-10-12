@@ -22,14 +22,6 @@ function commerce_payment_ui_order_tab($order) {
  *   to display payment method rules.
  */
 function commerce_payment_ui_admin_page() {
-  $content['rules']['add'] = array(
-    '#theme' => 'menu_local_action',
-    '#link' => array(
-      'href' => 'admin',
-      'title' => t('Link'),
-    ),
-  );
-
   $content['enabled']['title']['#markup'] = '<h3>' . t('Enabled payment rules') . '</h3>';
 
   $conditions = array('event' => 'commerce_payment_methods', 'plugin' => 'reaction rule', 'active' => TRUE);
@@ -48,9 +40,13 @@ function commerce_payment_ui_admin_page() {
 /**
  * Displays the full details of a payment transaction.
  */
-function commerce_payment_ui_payment_transaction_view($order, $transaction) {
-  // TODO: Display the current transaction data with a revision log beneath.
-  return '<pre>'. print_r($transaction, TRUE) .'</pre>';
+function commerce_payment_ui_payment_transaction_view($order, $transaction, $view_mode, $breadcrumb = TRUE) {
+  // Set the breadcrumb for the appropriate view mode if specified.
+  if ($breadcrumb) {
+    commerce_payment_ui_set_order_breadcrumb($order, $view_mode);
+  }
+
+  return commerce_payment_transaction_build_content($order, $transaction, $view_mode);
 }
 
 /**
@@ -65,7 +61,7 @@ function commerce_payment_ui_payment_transaction_view($order, $transaction) {
  */
 function commerce_payment_ui_payment_transaction_delete_form_wrapper($order, $transaction) {
   // Add the breadcrumb for the form's location.
-  commerce_order_ui_set_breadcrumb();
+  commerce_payment_ui_set_order_breadcrumb($order);
 
   // Include the forms file from the Payment module.
   module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.forms');

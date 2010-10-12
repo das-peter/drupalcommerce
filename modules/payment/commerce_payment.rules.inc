@@ -87,10 +87,10 @@ function commerce_payment_enable_method($order, $payment_method, $action_setting
 
   // Create a unique key for the instance of the payment method represented by
   // this action.
-  $method_key = $method_id . '|' . $rule->name;
+  $instance_id = commerce_payment_method_instance_id($method_id, $rule);
 
   // Set the payment method to the order along with its settings and context.
-  $order->payment_methods[$method_key] = array(
+  $order->payment_methods[$instance_id] = array(
     'method_id' => $method_id,
     'settings' => $settings,
     'rule_name' => $rule->name,
@@ -109,7 +109,7 @@ function commerce_payment_capture($order, $amount) {
  */
 function commerce_payment_rules_data_info() {
   $data['commerce_payment_settings'] = array(
-    'label' => t('payment settings'),
+    'label' => t('Payment settings'),
     'ui class' => 'RulesDataUIPaymentSettings',
   );
   return $data;
@@ -129,12 +129,12 @@ class RulesDataUIPaymentSettings extends RulesDataUI implements RulesDataDirectI
       $form[$name]['method_id'] = array('#type' => 'value', '#value' => $info['payment_method']);
 
       // If the payment method has a settings callback...
-      if (function_exists($payment_method->callbacks['settings'])) {
+      if ($callback = commerce_payment_method_callback($payment_method, 'settings_form')) {
         // Prepare an array of payment method settings defaults.
         $method_settings = !empty($settings[$name]) ? $settings[$name]['settings'] : array();
 
         // Add the settings form elements to the action form.
-        $form[$name]['settings'] = $payment_method->callbacks['settings']($method_settings);
+        $form[$name]['settings'] = $callback($method_settings);
       }
       else {
         // Otherwise add an appropriate message.

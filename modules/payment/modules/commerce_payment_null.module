@@ -40,7 +40,9 @@ function commerce_payment_null_submit_form($payment_method, $pane_values, $check
   $form['name'] = array(
     '#type' => 'textfield',
     '#title' => t('Name'),
+    '#description' => t('This is a demonstration field only and will fail validation with a single character.'),
     '#default_value' => $pane_values['name'],
+    '#required' => TRUE,
   );
 
   return $form;
@@ -49,12 +51,10 @@ function commerce_payment_null_submit_form($payment_method, $pane_values, $check
 /**
  * Payment method callback: checkout form validation.
  */
-function commerce_payment_null_submit_form_validate($payment_method, $pane_form, $pane_values, $order) {
-  // Throw an error if a name was not provided. Note that we can't use #required
-  // on the form element because of the current nature of the checkout form's
-  // back button. See: http://drupal.org/node/875220
-  if (empty($pane_values['name'])) {
-    form_set_error('name', t('You must enter a name.'));
+function commerce_payment_null_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
+  // Throw an error if a long enough name was not provided.
+  if (strlen($pane_values['name']) < 2) {
+    form_set_error(implode('][', array_merge($form_parents, array('name'))), t('You must enter a full name more than two characters long.'));
 
     // Even though the form error is enough to stop the submission of the form,
     // it's not enough to stop it from a Commerce standpoint because of the
@@ -66,6 +66,32 @@ function commerce_payment_null_submit_form_validate($payment_method, $pane_form,
 /**
  * Payment method callback: checkout form submission.
  */
-function commerce_payment_null_submit_form_submit($payment_method, $pane_form, $pane_values, $order) {
+function commerce_payment_null_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
   $order->data['commerce_payment_null'] = $pane_values;
+
+  commerce_payment_null_transaction($payment_method, $order, $charge, $pane_values['name']);
+}
+
+/**
+ * Creates a NULL payment transaction for the specified charge amount.
+ *
+ * @param $payment_method
+ *   The payment method instance object used to charge this payment.
+ * @param $order
+ *   The order object the payment applies to.
+ * @param $charge
+ *   An array indicating the amount and currency code to charge.
+ * @param $name
+ *   The name entered on the submission form.
+ */
+function commerce_payment_null_transaction($payment_method, $order, $charge, $name) {
+  $transaction = commerce_payment_transaction_new('commerce_payment_null', $order->order_id);
+  $transaction->instance_id = $payment_method->instance_id;
+  $transaction->amount = $charge['amount'];
+  $transaction->currency_code = $charge['currency_code'];
+  $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+  $transaction->message = 'Name: @name';
+  $transaction->message_variables = array('@name' => $name);
+
+  commerce_payment_transaction_save($transaction);
 }

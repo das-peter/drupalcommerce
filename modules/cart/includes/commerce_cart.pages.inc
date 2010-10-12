@@ -71,17 +71,14 @@ function commerce_cart_form($form, &$form_state, $order) {
 
   // The display title should come from the line item type.
   $product_line_item_type = commerce_line_item_type_load('product');
-  $title_callback = $product_line_item_type->title_callback;
+  $title_callback = commerce_line_item_type_callback($product_line_item_type, 'title');
 
   // Build the actual form with rows for product line items.
   $form['line_items'] = array(
     '#tree' => TRUE,
     '#theme' => 'commerce_cart_form_product_table',
-    '#header' => array(t('Remove'), t('Title'), t('SKU'), t('Qty'), t('Unit Price'), t('Total')),
+    '#header' => array('', t('Title'), t('SKU'), t('Qty'), t('Unit Price'), t('Total')),
     '#empty' => t('No products found.'),
-    '#attached' => array(
-      'js' => array(drupal_get_path('module', 'commerce_cart') . '/commerce_cart.js'),
-    ),
   );
 
   foreach ($line_items as $line_item_id => $line_item) {
@@ -92,12 +89,14 @@ function commerce_cart_form($form, &$form_state, $order) {
       );
 
       $form['line_items'][$line_item_id]['remove'] = array(
-        '#type' => 'checkbox',
-        '#attributes' => array('class' => array('onclick-submit')),
+        '#type' => 'submit',
+        '#value' => t('Remove'),
+        '#name' => 'remove-line-item-' . $line_item_id,
+        '#attributes' => array('class' => array('remove-line-item')),
       );
 
       $form['line_items'][$line_item_id]['title'] = array(
-        '#markup' => $title_callback($line_item),
+        '#markup' => $title_callback ? $title_callback($line_item) : '',
       );
 
       $form['line_items'][$line_item_id]['line_item_label'] = array(
@@ -176,7 +175,7 @@ function commerce_cart_form_submit($form, &$form_state) {
   // Loop through the line items and update the items on the cart order.
   foreach (element_children($form['line_items']) as $line_item_id) {
     // Check for the removal of an item.
-    if ($form_state['values']['line_items'][$line_item_id]['remove']) {
+    if ($form_state['clicked_button']['#name'] == 'remove-line-item-' . $line_item_id) {
       // Remove the line item from the line item reference field.
       foreach ($order->line_items[LANGUAGE_NONE] as $key => $value) {
         if ($value['line_item_id'] == $line_item_id) {
