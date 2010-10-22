@@ -642,6 +642,7 @@ function commerce_line_item_field_widget_info() {
     'settings' => array(),
     'behaviors' => array(
       'multiple values' => FIELD_BEHAVIOR_CUSTOM,
+      'default value' => FIELD_BEHAVIOR_NONE,
     ),
   );
 
@@ -924,6 +925,10 @@ function commerce_line_item_manager_validate($element, &$form_state, $form) {
         drupal_set_message($error, 'error');
       }
 
+      $form_state['rebuild'] = TRUE;
+    }
+    elseif (array_pop($form_state['clicked_button']['#parents']) == 'cancel') {
+      // If the cancel button was clicked refresh without action.
       $form_state['rebuild'] = TRUE;
     }
   }

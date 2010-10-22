@@ -50,7 +50,7 @@ class CommerceCustomerProfileEntityController extends DrupalDefaultEntityControl
    *   The saved customer profile object.
    */
   public function save($profile) {
-    $transaction = db_transaction('Saves a customer profile');
+    $transaction = db_transaction();
 
     try {
       global $user;
@@ -214,7 +214,7 @@ class CommerceCustomerProfileEntityController extends DrupalDefaultEntityControl
       // TODO: We'll need to ensure profiles on orders cannot be deleted when we
       // have orders implemented.
 
-      $transaction = db_transaction('Delete customer profiles');
+      $transaction = db_transaction();
 
       try {
         db_delete('commerce_customer_profile')

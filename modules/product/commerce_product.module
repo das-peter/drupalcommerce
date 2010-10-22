@@ -170,18 +170,6 @@ function commerce_product_permission() {
 }
 
 /**
- * Implementation of hook_hook_info().
- */
-function commerce_product_hook_info() {
-  foreach (array('info') as $hook) {
-    $hooks['commerce_product_' . $hook] = array(
-      'group' => 'commerce_product',
-    );
-  }
-  return $hooks;
-}
-
-/**
  * Returns an initialized product type object.
  */
 function commerce_product_type_new() {
@@ -190,7 +178,6 @@ function commerce_product_type_new() {
     'name' => '',
     'description' => '',
     'help' => '',
-    'modified' => 0,
   );
 }
 
@@ -216,7 +203,7 @@ function commerce_product_type_save($product_type) {
   menu_rebuild();
 
   // If this is a new product type and the insert did not fail...
-  if ($op !== FALSE && $op == SAVED_NEW) {
+  if (!empty($product_type->is_new) && $op !== FALSE) {
     // Notify the field API that a new bundle has been created.
     field_attach_create_bundle('commerce_product', $product_type->type);
 
@@ -230,9 +217,6 @@ function commerce_product_type_save($product_type) {
     // Notify other modules that an existing product type has been updated.
     module_invoke_all('commerce_product_type_update', $product_type);
   }
-
-  // Clear the product type cache.
-  drupal_static_reset('_commerce_product_types_build');
 
   return $op;
 }
@@ -263,9 +247,6 @@ function commerce_product_type_delete($type) {
   // Rebuild the menu to get rid of this type's product add menu item.
   menu_rebuild();
 
-  // Clear the product type cache.
-  drupal_static_reset('_commerce_product_types_build');
-
   // Notify the field API that this bundle has been destroyed.
   field_attach_delete_bundle('commerce_product', $type);
 
@@ -277,93 +258,13 @@ function commerce_product_type_delete($type) {
  * Returns an array of product type objects keyed by type.
  */
 function commerce_product_types() {
-  return _commerce_product_types_build()->types;
-}
-
-/**
- * Extract the type name.
- *
- * @param $product type
- *   Either a string or object, containing the product type information.
- *
- * @return
- *   Product type of the passed in data.
- */
-function _commerce_product_extract_type($type) {
-  return is_object($type) ? $type->type : $type;
-}
-
-/**
- * Updates the database cache of product types.
- *
- * All new module-defined product types are saved to the database via a call to
- * commerce_product_type_save()
- *
- * TODO: Obsolete ones are deleted via a call to commerce_product_type_delete().
- * Obsolete/Disabled flag will be added in _commerce_product_types_build()
- */
-function commerce_product_types_rebuild() {
-  // Reset and load updated product types.
-  drupal_static_reset('_commerce_product_types_build');
-
-  foreach (commerce_product_types() as $type) {
-    $existing = commerce_product_type_load($type->type);
-    if (empty($existing)) {
-      $type->is_new = TRUE;
-    }
-    commerce_product_type_save($type);
-  }
-}
-
-/**
- * Builds and returns the list of available product types similar to the concept used
- * for node types
- *
- * The list of types is built by invoking hook_commerce_product_info() on all modules and
- * comparing this information with the product types in the {commerce_product_type} table.
- * These two information sources are not synchronized during module installation
- * until commerce_product_types_rebuild() is called.
- *
- * @return
- *   Associative array with two components:
- *   - names: Associative array of the names of product types, keyed by the type.
- *   - types: Associative array of commerce product type objects, keyed by the type.
- *   Both of these arrays will include new types that have been defined by
- *   hook_commerce_product_info() implementations but not yet saved in the {commerce_product_type}
- *   table.
- */
-function _commerce_product_types_build() {
   // First check the static cache for a product types array.
   $product_types = &drupal_static(__FUNCTION__);
-  if (is_object($product_types)) {
-    return $product_types;
-  }
-  $product_types = (object)array('types' => array(), 'names' => array());
 
-  // Build product_types from modules that implement commerce_product_info().
-  $module_product_types = module_invoke_all('commerce_product_info');
-  if (count($module_product_types) > 0) {
-    foreach ($module_product_types as $type) {
-      $product_types->types[$type->type] = $type;
-      $product_types->names[$type->type] = $type->name;
-    }
+  // If it did not exist, fetch the types now.
+  if (!isset($product_types)) {
+    $product_types = db_query('SELECT * FROM {commerce_product_type}')->fetchAllAssoc('type');
   }
-
-  // Get product types from DB and add them to the product types array defined by hook_commerce_product_info()
-  // if they don't exist yet. Product types provided by the hook will override/update product types in the DB.
-  // However, the machine-readable name (type) will stay the same, only metadata is affected.
-  $db_product_types = db_query('SELECT * FROM {commerce_product_type}')->fetchAllAssoc('type');
-  foreach ($db_product_types as $type_object) {
-    // TODO: If product types can be disabled in the future, check for those not used by any module anymore
-    // and mark them as disabled. These product types will then be deleted next time commerce_product_types_rebuild()
-    // is called
-    if (!isset($product_types->types[$type_object->type]) || $type_object->modified) {
-      $product_types->types[$type_object->type] = $type_object;
-      $product_types->names[$type_object->type] = $type_object->name;
-    }
-  }
-
-  asort($product_types->names);
 
   return $product_types;
 }
@@ -372,7 +273,8 @@ function _commerce_product_types_build() {
  * Resets the cached list of product types.
  */
 function commerce_product_types_reset() {
-  drupal_static_reset('commerce_product_types');
+  $product_types = &drupal_static('commerce_product_types');
+  $product_types = NULL;
 }
 
 /**
@@ -387,13 +289,25 @@ function commerce_product_types_reset() {
  *     type is specified that does not exist, this function returns FALSE.
  */
 function commerce_product_type_get_name($type = NULL) {
-  $type = _commerce_product_extract_type($type);
-  $types = _commerce_product_types_build()->names;
+  $product_types = commerce_product_types();
 
-  if ($type != NULL && !isset($types[$type])) {
-    return FALSE;
+  // Return a type name if specified and it exists.
+  if (!empty($type)) {
+    if (isset($product_types[$type])) {
+      return $product_types[$type]->name;
+    }
+    else {
+      // Return FALSE if it does not exist.
+      return FALSE;
+    }
   }
-  return isset($types[$type]) ? $types[$type] : $types;
+
+  // Otherwise turn the array values into the type name only.
+  foreach ($product_types as $key => $value) {
+    $product_types[$key] = $value->name;
+  }
+
+  return $product_types;
 }
 
 /**

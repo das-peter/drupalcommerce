@@ -86,10 +86,13 @@ function commerce_product_features_revert($module) {
   // Get default product types
   if (module_hook($module, 'commerce_product_info')) {
     $default_types = module_invoke($module, 'commerce_product_info');
+    $existing_types = commerce_product_types();
     foreach ($default_types as $type) {
-      db_delete('commerce_product_type')
-      ->condition('type', $type->type)
-      ->execute();
+      // Add / or update
+      if (!isset($existing_types[$type->type])) {
+        $type->is_new = true;
+      }
+      commerce_product_type_save($type);
     }
   }
   else {
@@ -97,11 +100,13 @@ function commerce_product_features_revert($module) {
     return FALSE;
   }
 
-  commerce_product_types_rebuild();
+  // Re-Cache
+  drupal_static_reset('commerce_product_types');
+  commerce_product_types();
+
   menu_rebuild();
   return TRUE;
 }
-
 
 /**
  * Implementation of hook_features_rebuild().

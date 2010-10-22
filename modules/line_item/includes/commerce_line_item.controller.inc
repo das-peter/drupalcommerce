@@ -42,7 +42,7 @@ class CommerceLineItemEntityController extends DrupalDefaultEntityController {
    *   The saved line item object.
    */
   public function save($line_item) {
-    $transaction = db_transaction('Saves a line item');
+    $transaction = db_transaction();
 
     try {
       $line_item->changed = REQUEST_TIME;
@@ -114,7 +114,7 @@ class CommerceLineItemEntityController extends DrupalDefaultEntityController {
     if (!empty($line_item_ids)) {
       $line_items = $this->load($line_item_ids, array());
 
-      $transaction = db_transaction('Delete line items');
+      $transaction = db_transaction();
 
       try {
         db_delete('commerce_line_item')

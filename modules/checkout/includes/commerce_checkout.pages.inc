@@ -28,6 +28,10 @@ function commerce_checkout_router($order, $checkout_page = NULL) {
     drupal_goto(variable_get('commerce_checkout_empty_redirect', '<front>'));
   }
 
+  // Prior to displaying the checkout form, allow other modules to route the
+  // checkout form.
+  module_invoke_all('commerce_checkout_router');
+
   // Update the page title if specified.
   if (!empty($checkout_page->title)) {
     drupal_set_title($checkout_page->title);
@@ -209,7 +213,7 @@ function commerce_checkout_form_submit($form, &$form_state) {
       // If it happens to be the complete page, process completion now.
       if ($checkout_page->next_page == 'complete') {
         // Or go ahead and complete the sale.
-        commerce_checkout_complete($form_state, $order);
+        commerce_checkout_complete($form, $form_state, $order);
       }
 
       // Move the form forward to that page.

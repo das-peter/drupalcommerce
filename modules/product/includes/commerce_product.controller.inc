@@ -44,7 +44,7 @@ class CommerceProductEntityController extends DrupalDefaultEntityController {
    *   The saved product object.
    */
   public function save($product) {
-    $transaction = db_transaction('Saves a product');
+    $transaction = db_transaction();
 
     try {
       $product->changed = REQUEST_TIME;
@@ -113,7 +113,7 @@ class CommerceProductEntityController extends DrupalDefaultEntityController {
       // TODO: We'll need to ensure products on orders cannot be deleted when we
       // have orders implemented.
 
-      $transaction = db_transaction('Delete products');
+      $transaction = db_transaction();
 
       try {
         db_delete('commerce_product')
