@@ -36,6 +36,7 @@ function commerce_line_item_entity_info() {
       'save callback' => 'commerce_line_item_save',
       'deletion callback' => 'commerce_line_item_delete',
       'access callback' => 'commerce_line_item_access',
+      'token type' => 'line_item',
     ),
   );
 
