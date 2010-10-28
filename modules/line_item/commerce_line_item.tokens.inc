@@ -14,7 +14,7 @@ function commerce_line_item_token_info() {
   $type = array(
     'name' => t('Line items'),
     'description' => t('Tokens related to individual line items.'),
-    'needs-data' => 'commerce_line_item',
+    'needs-data' => 'line_item',
   );
 
   // Tokens for line items.
