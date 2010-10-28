@@ -43,7 +43,7 @@ function commerce_customer_entity_info() {
       'save callback' => 'commerce_customer_profile_save',
       'deletion callback' => 'commerce_customer_profile_delete',
       'access callback' => 'commerce_customer_profile_access',
-  		'token type' => 'customer',
+      'token type' => 'customer',
     ),
   );
 
