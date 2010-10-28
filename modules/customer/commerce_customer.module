@@ -193,9 +193,11 @@ function commerce_customer_profile_types() {
  * Loads a customer profile type.
  *
  * @param $type
- *   The machine-readable name of the customer profile type.
+ *   The machine-readable name of the customer profile type, where '_' is replaced
+ *   with '-'.
  */
 function commerce_customer_profile_type_load($type) {
+  $type = strtr($type, array('-' => '_'));
   $profile_types = commerce_customer_profile_types();
   return !empty($profile_types[$type]) ? $profile_types[$type] : FALSE;
 }
@@ -876,8 +878,7 @@ function commerce_customer_field_widget_error($element, $error) {
  * @see commerce_customer_field_info().
  */
 function commerce_customer_profile_property_info_callback(&$info, $entity_type, $field, $instance, $field_type) {
-  $name = str_replace('_', '-', $field['field_name']);
-  $property = &$info[$entity_type]['bundles'][$instance['bundle']]['properties'][$name];
+  $property = &$info[$entity_type]['bundles'][$instance['bundle']]['properties'][$field['field_name']];
   $property['options list'] = 'entity_metadata_field_options_list';
   unset($property['query callback']);
 }

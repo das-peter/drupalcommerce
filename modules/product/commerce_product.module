@@ -226,10 +226,11 @@ function commerce_product_type_save($product_type) {
  * Loads a product type.
  *
  * @param $type
- *   The machine-readable name of the product type.
+ *   The machine-readable name of the product type, where '_' is replaced
+ *   with '-'.
  */
 function commerce_product_type_load($type) {
-  return db_query('SELECT * FROM {commerce_product_type} WHERE type = :type', array(':type' => $type))->fetchObject();
+  return db_query('SELECT * FROM {commerce_product_type} WHERE type = :type', array(':type' => strtr($type, array('-' => '_'))))->fetchObject();
 }
 
 /**
