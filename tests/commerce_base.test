@@ -161,7 +161,7 @@ abstract class CommerceBaseTestCase extends DrupalWebTestCase {
    * @return
    *  A user with the permissions returned from permissionBuilder().
    */
-  protected function createUserWithPermissionHeper($set) {
+  protected function createUserWithPermissionHelper($set) {
     $permissions = $this->permissionBuilder($set);
     $user = $this->drupalCreateUser($permissions);
     return $user;
@@ -172,7 +172,7 @@ abstract class CommerceBaseTestCase extends DrupalWebTestCase {
    * modules in Drupal core.
    */
   protected function createSiteAdmin() {
-    return $this->createUserWithPermissionHeper('site admin');
+    return $this->createUserWithPermissionHelper('site admin');
   }
 
   /**
@@ -180,7 +180,7 @@ abstract class CommerceBaseTestCase extends DrupalWebTestCase {
    * Commerce modules.
    */
   protected function createStoreAdmin() {
-    return $this->createUserWithPermissionHeper('store admin');
+    return $this->createUserWithPermissionHelper('store admin');
   }
 
 
@@ -530,25 +530,25 @@ class CommerceBaseTesterTestCase extends CommerceBaseTestCase {
     $this->drupalGet('admin/modules');
 
     $module_ids = array(
-      'edit-modules-drupal-commerce-commerce-cart-enable',
-      'edit-modules-drupal-commerce-commerce-checkout-enable',
-      'edit-modules-drupal-commerce-commerce-enable',
-      'edit-modules-drupal-commerce-commerce-customer-enable',
-      'edit-modules-drupal-commerce-commerce-line-item-enable',
-      'edit-modules-drupal-commerce-commerce-order-enable',
-      'edit-modules-drupal-commerce-commerce-payment-enable',
-      'edit-modules-drupal-commerce-commerce-price-enable',
-      'edit-modules-drupal-commerce-commerce-product-enable',
-      'edit-modules-drupal-commerce-commerce-product-reference-enable',
+      'edit-modules-commerce-commerce-cart-enable',
+      'edit-modules-commerce-commerce-checkout-enable',
+      'edit-modules-commerce-commerce-enable',
+      'edit-modules-commerce-commerce-customer-enable',
+      'edit-modules-commerce-commerce-line-item-enable',
+      'edit-modules-commerce-commerce-order-enable',
+      'edit-modules-commerce-commerce-payment-enable',
+      'edit-modules-commerce-commerce-price-enable',
+      'edit-modules-commerce-commerce-product-enable',
+      'edit-modules-commerce-commerce-product-reference-enable',
 
-      'edit-modules-drupal-commerce-payment-commerce-payment-null-enable',
+      'edit-modules-commerce-commerce-payment-null-enable',
 
-      'edit-modules-drupal-commerce-ui-commerce-ui-enable',
-      'edit-modules-drupal-commerce-ui-commerce-customer-ui-enable',
-      'edit-modules-drupal-commerce-ui-commerce-line-item-ui-enable',
-      'edit-modules-drupal-commerce-ui-commerce-order-ui-enable',
-      'edit-modules-drupal-commerce-ui-commerce-payment-ui-enable',
-      'edit-modules-drupal-commerce-ui-commerce-product-ui-enable',
+      'edit-modules-commerce-commerce-ui-enable',
+      'edit-modules-commerce-commerce-customer-ui-enable',
+      'edit-modules-commerce-commerce-line-item-ui-enable',
+      'edit-modules-commerce-commerce-order-ui-enable',
+      'edit-modules-commerce-commerce-payment-ui-enable',
+      'edit-modules-commerce-commerce-product-ui-enable',
 
       'edit-modules-other-addressfield-enable',
       'edit-modules-other-entity-enable',
