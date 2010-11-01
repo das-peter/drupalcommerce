@@ -9,6 +9,7 @@ core = 7.x
 ; Base module files
 files[] = commerce_customer.module
 files[] = commerce_customer.install
+files[] = commerce_customer.features.inc
 
 ; Module includes
 files[] = includes/commerce_customer_profile.controller.inc
