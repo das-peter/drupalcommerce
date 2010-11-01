@@ -41,6 +41,11 @@ function commerce_customer_features_export($data, &$export, $module_name = '') {
   foreach ($data as $type) {
     $export['features']['commerce_customer'][$type] = $type;
 
+    // Add module dependencies
+    $info = commerce_customer_profile_type_load($type);
+    $export['dependencies'][$info->module] = $info->module;
+
+    // Fetch fields of the profile type
     $fields = field_info_instances('commerce_customer_profile', $type);
     foreach ($fields as $name => $field) {
       $pipe['field'][] = "commerce_customer_profile-{$field['bundle']}-{$field['field_name']}";
@@ -57,7 +62,9 @@ function commerce_customer_features_export_render($module = 'foo', $data) {
   $output[] = '  $items = array(';
   foreach ($data as $type) {
     $info = commerce_customer_profile_type_load($type);
+
     if(!empty($info)) {
+
       $output[] = "  (object) array(";
       foreach ($info as $key => $t) {
         if ($t) {
@@ -85,7 +92,8 @@ function commerce_customer_features_export_render($module = 'foo', $data) {
 function commerce_customer_features_revert($module) {
   // Get default profile types
   if (module_hook($module, 'commerce_customer_profile_info')) {
-    $default_types = module_invoke($module, 'commerce_customer_profile_info');
+    // Nothing to do since the whole thing is handled via fields
+    /*$default_types = module_invoke($module, 'commerce_customer_profile_info');
     $existing_types = commerce_customer_profile_types();
     foreach ($default_types as $type) {
       // Add / or update
@@ -93,7 +101,7 @@ function commerce_customer_features_revert($module) {
         $type->is_new = true;
       }
       commerce_customer_profile_type_save($type);
-    }
+    }*/
   }
   else {
     drupal_set_message(t('Could not load default profile types.'), 'error');
