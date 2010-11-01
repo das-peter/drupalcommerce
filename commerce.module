@@ -1965,18 +1965,18 @@ function commerce_currency_format($price, $currency_code, $object = NULL) {
 /**
  * Rounds a price to currency needs.
  *
- * Normal rounding will apply for the most currencies, but some e.g. Swiss Francs
- * have to be rounded to five steps.
+ * Normal rounding will apply for the most currencies, but some e.g.
+ * Swiss Francs have to be rounded to five steps.
  *
  * @param integer $price
- * 	 The value to round
+ *   The value to round
  * @param integer $decimals
- * 	 Number of decimal digits to round to.
+ *   Number of decimal digits to round to.
  * @param integer $base
- * 	 Stepsize to round to. Currently only works with 2 and 5
+ *   Stepsize to round to. Currently only works with 2 and 5
  *
  * @return
- * 	 The rounded value
+ *   The rounded value
  */
 function commerce_currency_rounding($price, $decimals = 2, $base = 0) {
   if (!$base) {
