@@ -35,7 +35,7 @@ function commerce_line_item_entity_info() {
       'creation callback' => '_commerce_line_item_create',
       'save callback' => 'commerce_line_item_save',
       'deletion callback' => 'commerce_line_item_delete',
-      'access callback' => 'commerce_line_item_access',
+      // 'access callback' => 'commerce_line_item_access',
       'token type' => 'line_item',
     ),
   );
@@ -161,26 +161,6 @@ function commerce_line_item_permission() {
   );
 
   return $permissions;
-}
-
-/**
- * Checks line item access for various operations.
- *
- * @param $op
- *   The operation being performed. One of 'view', 'update', 'create' or
- *   'delete'.
- * @param $account
- *   The user to check for. Leave it to NULL to check for the current user.
- */
-function commerce_line_item_access($op, $account = NULL) {
-  global $user;
-  $account = isset($account) ? $account : $user;
-
-  if (user_access('administer line item types', $account)) {
-    return TRUE;
-  }
-
-  return FALSE;
 }
 
 /**
