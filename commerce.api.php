@@ -11,7 +11,7 @@
 /**
  * Defines currencies available to commerce.
  *
- * By default commerce provides all active currencies according to ISO4217.
+ * By default commerce provides all active currencies according to ISO 4217.
  * Make sure to use the translate function t() for translatable properties.
  *
  * @return
@@ -68,12 +68,12 @@ function hook_commerce_currency_info() {
 /**
  * Alter commerce currencies.
  *
- * By default commerce provides all active currencies according to ISO 4217.
- * This hook allowes to extend the available currencies or change the formatting
- * properties of existing definitions.
+ * By default Commerce provides all active currencies according to ISO 4217.
+ * This hook allows you to change the formatting properties of existing
+ * definitions.
  *
  * @see hook_commerce_currency_info()
  */
 function hook_commerce_currency_info_alter(&$currencies, $langcode) {
-  $currencies->code_placement = 'after';
+  $currencies['CHF']['code_placement'] = 'after';
 }

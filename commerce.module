@@ -320,16 +320,18 @@ function commerce_currency_format($price, $currency_code, $object = NULL) {
 /**
  * Rounds a price amount for the specified currency.
  *
- * Rounding of the minor unit with a currency specific step size.
- * For example Swiss Francs are rounded using a step size of 0.05.
- * This means a price like 10.93 is converted to 10.95.
+ * Rounding of the minor unit with a currency specific step size. For example,
+ * Swiss Francs are rounded using a step size of 0.05. This means a price of
+ * 10.93 is converted to 10.95.
  *
  * @param $price
  *   The numeric value of the price to be rounded.
  * @param $currency
  *   The currency object containing the rounding information pertinent to this
  *     price. Specifically, this function looks for the 'rounding_step' property
- *     for the step size to round to.
+ *     for the step size to round to, supporting '0.05' and '0.02'. If the value
+ *     is 0, this function performs normal rounding to the nearest supported
+ *     decimal value.
  *
  * @return
  *   The rounded numeric value for the price.
