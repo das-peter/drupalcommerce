@@ -11,27 +11,40 @@ function commerce_customer_features_api() {
   return array(
   'commerce_customer' => array(
     'name' => t('Commerce Customer Profile Types'),
-    'default_hook' => 'commerce_customer_commerce_customer_profile_info',
-    'default_file' => FEATURES_DEFAULTS_INCLUDED,
+    'default_hook' => 'customer_default_types',
+    // 'default_file' => FEATURES_DEFAULTS_INCLUDED,
     'features_source' => TRUE,
-    )
+    ),
   );
 }
 
 /**
- * Implementation of hook_features_export_options().
+ * Defines the default hook for features integration.
+ *
+ * Since the commerce_customer module doesn't implement this
+ * it's done here :)
+ */
+function commerce_customer_customer_default_types() {
+  return commerce_customer_commerce_customer_profile_info();
+}
+
+/**
+ * Implements hook_features_export_options().
  */
 function commerce_customer_features_export_options() {
   $options = array();
   $profile_types = commerce_customer_profile_types();
-  if(!empty($profile_types)) {
-    foreach($profile_types as $type) {
+  if (!empty($profile_types)) {
+    foreach ($profile_types as $type) {
       $options[$type->type] = $type->name;
     }
   }
   return $options;
 }
 
+/**
+* Build the export information for features.
+*/
 function commerce_customer_features_export($data, &$export, $module_name = '') {
   $pipe = array();
 
@@ -55,28 +68,28 @@ function commerce_customer_features_export($data, &$export, $module_name = '') {
 }
 
 /**
- * Implementation of hook_features_export_render().
+ * Implements hook_features_export_render().
  */
-function commerce_customer_features_export_render($module = 'foo', $data) {
+function commerce_customer_features_export_render($module, $data) {
   $output = array();
   $output[] = '  $items = array(';
   foreach ($data as $type) {
     $info = commerce_customer_profile_type_load($type);
 
-    if(!empty($info)) {
+    if (!empty($info) && ($info->module == $module || $info->module == 'commerce_customer_ui')) {
 
-      $output[] = "  (object) array(";
+      $output[] = "    '$type' => (object) array(";
       foreach ($info as $key => $t) {
         if ($t) {
           $text = str_replace("'", "\'", $info->$key);
           $text = (!empty($text) && $key !='type') ? "t('{$text}')" : "'{$text}'";
-          $output[] = "      '{$key}' => {$text},";
+          $output[] = "        '{$key}' => {$text},";
         }
         else {
-          $output[] = "      '{$key}' => '{$info->$key}',";
+          $output[] = "        '{$key}' => '{$info->$key}',";
         }
       }
-      $output[] = "    ),";
+      $output[] = "      ),";
     }
   }
   $output[] = '  );';
@@ -87,7 +100,7 @@ function commerce_customer_features_export_render($module = 'foo', $data) {
 
 
 /**
- * Implementation of hook_features_revert().
+ * Implements hook_features_revert().
  */
 function commerce_customer_features_revert($module) {
   // Get default profile types
@@ -117,7 +130,7 @@ function commerce_customer_features_revert($module) {
 }
 
 /**
- * Implementation of hook_features_rebuild().
+ * Implements hook_features_rebuild().
  */
 function commerce_customer_features_rebuild($module) {
   return commerce_customer_features_revert($module);
