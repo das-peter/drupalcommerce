@@ -36,6 +36,7 @@ abstract class CommerceBaseTestCase extends DrupalWebTestCase {
       'addressfield',
       //'rules_admin',
       // UI
+      'ctools',
       'views',
       //'views_ui',
       'field',
@@ -63,7 +64,7 @@ abstract class CommerceBaseTestCase extends DrupalWebTestCase {
       'commerce_payment_ui',
     );
     $payment = array(
-      'commerce_payment_null',
+      'commerce_payment_example',
     );
 
     // Final module list
@@ -231,8 +232,8 @@ abstract class CommerceBaseTestCase extends DrupalWebTestCase {
       $new_product->type = $type_given;
       $new_product->title = empty($title) ? $this->randomName(10) : $title;
       $new_product->uid = $uid;
-      $new_product->base_price[LANGUAGE_NONE][0]['price'] = ($price < 0) ? rand(2, 500) : $price;
-      $new_product->base_price[LANGUAGE_NONE][0]['currency_code'] = 'USD';
+      $new_product->purchase_price[LANGUAGE_NONE][0]['price'] = ($price < 0) ? rand(2, 500) : $price;
+      $new_product->purchase_price[LANGUAGE_NONE][0]['currency_code'] = 'USD';
       $save_result = commerce_product_save($new_product);
       return $new_product;
     } else {
@@ -540,20 +541,22 @@ class CommerceBaseTesterTestCase extends CommerceBaseTestCase {
       'edit-modules-commerce-commerce-product-enable',
       'edit-modules-commerce-commerce-product-reference-enable',
 
-      'edit-modules-commerce-commerce-payment-null-enable',
+      'edit-modules-drupal-commerce-commerce-payment-example-enable',
 
-      'edit-modules-commerce-commerce-ui-enable',
-      'edit-modules-commerce-commerce-customer-ui-enable',
-      'edit-modules-commerce-commerce-line-item-ui-enable',
-      'edit-modules-commerce-commerce-order-ui-enable',
-      'edit-modules-commerce-commerce-payment-ui-enable',
-      'edit-modules-commerce-commerce-product-ui-enable',
+      'edit-modules-drupal-commerce-commerce-ui-enable',
+      'edit-modules-drupal-commerce-commerce-customer-ui-enable',
+      'edit-modules-drupal-commerce-commerce-line-item-ui-enable',
+      'edit-modules-drupal-commerce-commerce-order-ui-enable',
+      'edit-modules-drupal-commerce-commerce-payment-ui-enable',
+      'edit-modules-drupal-commerce-commerce-product-ui-enable',
 
       'edit-modules-other-addressfield-enable',
       'edit-modules-other-entity-enable',
       'edit-modules-other-entity-metadata-enable',
 
       'edit-modules-rules-rules-enable',
+
+      'edit-modules-chaos-tool-suite-ctools-enable',
 
       'edit-modules-views-views-enable',
     );
@@ -708,11 +711,11 @@ class CommerceBaseTesterTestCase extends CommerceBaseTestCase {
       ),
     );
 
-    foreach ($rounding_numbers as $decimals => $bases) {
-      foreach ($bases as $base => $numbers) {
+    foreach ($rounding_numbers as $decimals => $rounding_steps) {
+      foreach ($rounding_steps as $rounding_step => $numbers) {
         foreach ($numbers as $input => $output) {
-          $result = commerce_currency_rounding($input, $decimals, $base);
-          $this->assertEqual($result, $output, 'Round ' . $input . ' to ' . $decimals . ' decimals with ' . $base . ' as base results in ' . $output);
+          $result = commerce_currency_round($input, (object) array('decimals' => $decimals, 'rounding_step' => $rounding_step));
+          $this->assertEqual($result, $output, 'Rounding ' . $input . ' to ' . $decimals . ' decimals with ' . $rounding_step . ' as the rounding step results in ' . $output . '.');
         }
       }
     }
