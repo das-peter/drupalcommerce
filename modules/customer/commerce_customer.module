@@ -193,8 +193,9 @@ function commerce_customer_profile_types() {
  * Loads a customer profile type.
  *
  * @param $type
- *   The machine-readable name of the customer profile type, where '_' is replaced
- *   with '-'.
+ *   The machine-readable name of the customer profile type; accepts normal
+ *     machine names and URL prepared machine names with underscores replaced by
+ *     hyphens.
  */
 function commerce_customer_profile_type_load($type) {
   $type = strtr($type, array('-' => '_'));

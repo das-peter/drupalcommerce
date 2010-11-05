@@ -200,13 +200,13 @@ abstract class CommerceBaseTestCase extends DrupalWebTestCase {
         $description = $description .' '. $this->randomString(128);
         $help = $help .' '. $this->randomString(128);
       }
-      $new_product_type = commerce_product_type_new();
+      $new_product_type = commerce_product_ui_product_type_new();
       $new_product_type->type = $type;
       $new_product_type->name = $name;
       $new_product_type->description = $description;
       $new_product_type->help = $help;
       $new_product_type->is_new = TRUE;
-      $save_result = commerce_product_type_save($new_product_type);
+      $save_result = commerce_product_ui_product_type_save($new_product_type);
       if ($save_result === FALSE) {
         return FALSE;
       }
@@ -541,14 +541,14 @@ class CommerceBaseTesterTestCase extends CommerceBaseTestCase {
       'edit-modules-commerce-commerce-product-enable',
       'edit-modules-commerce-commerce-product-reference-enable',
 
-      'edit-modules-drupal-commerce-commerce-payment-example-enable',
+      'edit-modules-commerce-commerce-payment-example-enable',
 
-      'edit-modules-drupal-commerce-commerce-ui-enable',
-      'edit-modules-drupal-commerce-commerce-customer-ui-enable',
-      'edit-modules-drupal-commerce-commerce-line-item-ui-enable',
-      'edit-modules-drupal-commerce-commerce-order-ui-enable',
-      'edit-modules-drupal-commerce-commerce-payment-ui-enable',
-      'edit-modules-drupal-commerce-commerce-product-ui-enable',
+      'edit-modules-commerce-commerce-ui-enable',
+      'edit-modules-commerce-commerce-customer-ui-enable',
+      'edit-modules-commerce-commerce-line-item-ui-enable',
+      'edit-modules-commerce-commerce-order-ui-enable',
+      'edit-modules-commerce-commerce-payment-ui-enable',
+      'edit-modules-commerce-commerce-product-ui-enable',
 
       'edit-modules-other-addressfield-enable',
       'edit-modules-other-entity-enable',
