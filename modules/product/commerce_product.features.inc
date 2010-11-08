@@ -88,7 +88,7 @@ function commerce_product_features_export_render($module, $data) {
   $output[] = '  );';
   $output[] = '  return $items;';
   $output = implode("\n", $output);
-  return array('commerce_product_info' => $output);
+  return array('product_default_types' => $output);
 }
 
 
@@ -97,8 +97,8 @@ function commerce_product_features_export_render($module, $data) {
  */
 function commerce_product_features_revert($module) {
   // Get default product types
-  if (module_hook($module, 'commerce_product_info')) {
-    $default_types = module_invoke($module, 'commerce_product_info');
+  if (module_hook($module, 'product_default_types')) {
+    $default_types = module_invoke($module, 'product_default_types');
     $existing_types = commerce_product_types();
     foreach ($default_types as $type) {
       // Add / or update
