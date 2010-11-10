@@ -89,6 +89,14 @@ function commerce_line_item_field_extra_fields() {
 }
 
 /**
+ * Getter callback to return commerce_product.
+ */
+function commerce_line_item_product_entity_metadata_field_getter($object, array $options, $name, $obj_type, &$context) {
+  $language = (isset($options['language']) && $options['language']) ? $options['language'] : LANGUAGE_NONE;
+  return $object->{$name}[$language][0]['product_id'];
+}
+
+/**
  * Implements hook_theme().
  */
 function commerce_line_item_theme() {

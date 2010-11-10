@@ -45,6 +45,49 @@ function commerce_product_rules_event_info() {
 }
 
 /**
+ * Implements hook_rules_condition_info().
+ */
+function commerce_product_rules_condition_info() {
+  $conditions = array(
+    'commerce_product_condition_product_is_of_type' => array(
+      'label' => t('Product is of type'),
+      'help' => t('Evaluates to TRUE if the given product is of one of the selected product types.'),
+      'base' => 'commerce_product_condition_product_is_of_type',
+      'parameter' => array(
+        'product' => array('type' => 'commerce_product', 'label' => t('Product')),
+        'product_types' => array(
+          'label' => t('Product types'),
+          'type' => 'list<text>',
+          'options list' => 'commerce_product_rules_condition_parameter_data',
+  				'restriction' => 'input',
+        ),
+      ),
+      'group' => t('Commerce'),
+    ),
+  );
+  return $conditions;
+}
+
+/**
+ * Provides data for the conditions
+ * @param RulesCondition $element
+ * @param string $name
+ *
+ * @TODO Figure out how to really implement this.
+ */
+function commerce_product_rules_condition_parameter_data($element, $name) {
+  if ($name == 'product_types') {
+    return commerce_product_type_get_name();
+  }
+}
+/**
+ * Provides the content type of a node as asserted metadata.
+ */
+function commerce_product_condition_product_is_of_type($product, $types) {
+  return isset($types[$product->type]);
+}
+
+/**
  * Returns some parameter suitable for using it with a node
  */
 function commerce_product_rules_variables($label, $update = FALSE) {

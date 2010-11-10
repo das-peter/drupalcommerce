@@ -45,6 +45,23 @@ function commerce_line_item_token_info() {
     'type' => 'date',
   );
 
+  //@TODO Is this the right place to define these properties?
+  $line_item['product'] = array(
+  	'name' => t('Product'),
+		'description' => t('The product assigned to the line item.'),
+    'type' => 'commerce_product',
+  );
+  $line_item['unit_price'] = array(
+    'label' => t('Unit price'),
+    'description' => t('Price per unit of this line item.'),
+    'type' => 'commerce_price',
+  );
+  $line_item['total'] = array(
+  	'label' => t('Total'),
+  	'description' => t('Price of all units of this line item.'),
+    'type' => 'commerce_price',
+  );
+
   return array(
     'types' => array('line_item' => $type),
     'tokens' => array('line_item' => $line_item),
@@ -97,6 +114,10 @@ function commerce_line_item_tokens($type, $tokens, array $data = array(), array 
           break;
 
         case 'changed':
+          $replacements[$original] = format_date($line_item->changed, 'medium', '', NULL, $language_code);
+          break;
+
+        case 'product':
           $replacements[$original] = format_date($line_item->changed, 'medium', '', NULL, $language_code);
           break;
 
