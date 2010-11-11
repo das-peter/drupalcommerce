@@ -83,5 +83,40 @@ function commerce_line_item_rules_access($type, $name) {
 }
 
 /**
+* Implements hook_rules_action_info().
+*/
+function commerce_line_item_rules_action_info() {
+  $actions = array();
+
+  $actions['commerce_line_item_calculate_total'] = array(
+    'label' => t('Calculate total'),
+    'parameter' => array(
+      'line_item' => array(
+        'type' => 'commerce_line_item',
+        'label' => t('Line item'),
+      ),
+    ),
+    'group' => t('Commerce - line item'),
+  );
+
+  return $actions;
+}
+
+/**
+ * Recalculate the total price of the line item.
+ *
+ * Usefull if unit_price is changed by a rule / hook.
+ *
+ * @param stdClass $line_item
+ */
+function commerce_line_item_calculate_total($line_item) {
+  // Update the total of the line item based on the quantity and unit price.
+  $line_item->total[LANGUAGE_NONE][0] = array(
+    'price' => $line_item->quantity * $line_item->unit_price[LANGUAGE_NONE][0]['price'],
+    'currency_code' => $line_item->unit_price[LANGUAGE_NONE][0]['currency_code'],
+  );
+}
+
+/**
  * @}
  */
