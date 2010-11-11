@@ -81,10 +81,14 @@ function commerce_product_rules_condition_parameter_data($element, $name) {
   }
 }
 /**
- * Provides the content type of a node as asserted metadata.
+ * Check if the give product matches one of the given types.
+ *
+ * @param commerce_product|array
+ * 	 Handles product objects or arrays provided by commerce_product_refrence.
+ * @return boolean
  */
 function commerce_product_condition_product_is_of_type($product, $types) {
-  // Handle commerce_product_reference data
+  // Handle data from commerce_product_reference.
   if (is_array($product)) {
     if (count($product)) {
       foreach ( $product as $language => $deltas) {
