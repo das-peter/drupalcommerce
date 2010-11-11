@@ -37,27 +37,28 @@ function commerce_line_item_entity_property_info() {
     'query callback' => 'entity_metadata_table_query',
   );
   $properties['quantity'] = array(
-      'label' => t('Quantity'),
-      'description' => t('Quantity associated with this line item'),
-      'type' => 'integer',
+    'label' => t('Quantity'),
+    'description' => t('Quantity associated with this line item'),
+    'type' => 'integer',
   );
 
   // TODO: by das-peter - because I haven't really a clue what I'm doing here - review desperately needed
   $properties['product'] = array(
     'label' => t('Product'),
     'description' => t('The product assigned to this line item.'),
-    'type' => 'commerce_product',
-  	'getter callback' => 'commerce_line_item_product_entity_metadata_field_getter',
+    'type' => 'commerce_product_reference',
   );
   $properties['unit_price'] = array(
     'label' => t('Unit price'),
     'description' => t('Price per unit of this line item.'),
     'type' => 'commerce_price',
+    'setter callback' => 'entity_metadata_verbatim_set',
   );
   $properties['total'] = array(
     'label' => t('Total'),
     'description' => t('Price of all units of this line item.'),
     'type' => 'commerce_price',
+    'setter callback' => 'entity_metadata_verbatim_set',
   );
   return $info;
 }

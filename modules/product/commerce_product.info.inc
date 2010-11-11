@@ -80,7 +80,8 @@ function commerce_product_entity_property_info() {
   $properties['purchase_price'] = array(
       'label' => t('Price'),
       'description' => t('Purchase price of this product.'),
-      'type' => 'integer',
+      'type' => 'commerce_price',
+      'setter callback' => 'entity_metadata_verbatim_set',
   );
 
   return $info;

@@ -17,7 +17,7 @@ function commerce_price_rules_event_info() {
     'commerce_price_alter' => array(
       'label' => t('Alter a price for display / purchase'),
       'group' => t('Commerce - price'),
-      'variables' => commerce_price_rules_variables(t('price')),
+      'variables' => commerce_price_rules_variables(),
       'access callback' => 'commerce_order_rules_access',
     ),
   );
@@ -28,11 +28,12 @@ function commerce_price_rules_event_info() {
 /**
  * Returns parameters suitable for using Rules to alter prices.
  */
-function commerce_price_rules_variables() {
+function commerce_price_rules_variables($label = NULL) {
+  $label = (!$label) ? t('Price') : $label;
   $args = array(
     'price' => array(
       'type' => 'commerce_price',
-      'label' => t('Price'),
+      'label' => $label,
     ),
   );
 
@@ -145,8 +146,10 @@ function commerce_price_rules_action_info() {
  */
 function commerce_price_add_price($price, $amount) {
   if (is_numeric($amount)) {
-    $price->modifyPrice('rules', t('Add an amount to the price'), $amount);
+    // $price->modifyPrice('rules', t('Add an amount from the price'), +$amount);
+    $price[LANGUAGE_NONE][0]['price'] += $amount;
   }
+  return array('price' => $price);
 }
 
 /**
@@ -154,8 +157,10 @@ function commerce_price_add_price($price, $amount) {
  */
 function commerce_price_subtract_price($price, $amount) {
   if (is_numeric($amount)) {
-    $price->modifyPrice('rules', t('Subtract an amount from the price'), -$amount);
+    // $price->modifyPrice('rules', t('Subtract an amount from the price'), -$amount);
+    $price[LANGUAGE_NONE][0]['price'] -= $amount;
   }
+  return array('price' => $price);
 }
 
 /**
@@ -163,10 +168,12 @@ function commerce_price_subtract_price($price, $amount) {
  */
 function commerce_price_multiply_price($price, $amount) {
   if (is_numeric($amount)) {
-    $product = $price->getPrice() * $amount;
+    // $product = $price->getPrice() * $amount;
 
-    $price->modifyPrice('rules', t('Multiply the price by some amount'), $product - $price->getPrice());
+    // $price->modifyPrice('rules', t('Multiply the price by some amount'), $product - $price->getPrice());
+    $price[LANGUAGE_NONE][0]['price'] = $price[LANGUAGE_NONE][0]['price'] * $amount;
   }
+  return array('price' => $price);
 }
 
 /**
@@ -174,10 +181,12 @@ function commerce_price_multiply_price($price, $amount) {
  */
 function commerce_price_divide_price($price, $amount) {
   if (is_numeric($amount)) {
-    $quotient = $price->getPrice() / $amount;
+    // $quotient = $price->getPrice() / $amount;
 
-    $price->modifyPrice('rules', t('Divide the price by some amount'), $quotient - $price->getPrice());
+    // $price->modifyPrice('rules', t('Divide the price by some amount'), $quotient - $price->getPrice());
+    $price[LANGUAGE_NONE][0]['price'] = $price[LANGUAGE_NONE][0]['price'] * $amount;
   }
+  return array('price' => $price);
 }
 
 /**
@@ -185,15 +194,20 @@ function commerce_price_divide_price($price, $amount) {
  */
 function commerce_price_set_price($price, $amount) {
   if (is_numeric($amount)) {
-    $price->modifyPrice('rules', t('Set the price to a specific amount'), $amount - $price->getPrice());
+    //$price->modifyPrice('rules', t('Set the price to a specific amount'), $amount - $price->getPrice());
+    $price[LANGUAGE_NONE][0]['price'] = $amount;
   }
+  return array('price' => $price);
 }
 
 /**
  * Rules action: set the currency code.
  */
 function commerce_price_set_currency_code($price, $currency_code) {
-  $price->modifyPrice('rules', t('Set the currency code'), 0, $currency_code);
+  //$price->modifyPrice('rules', t('Set the currency code'), 0, $currency_code);
+  $price[LANGUAGE_NONE][0]['currency_code'] = $currency_code;
+
+  return array('price' => $price);
 }
 
 /**
