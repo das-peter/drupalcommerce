@@ -54,12 +54,12 @@ function commerce_product_rules_condition_info() {
       'help' => t('Evaluates to TRUE if the given product is of one of the selected product types.'),
       'base' => 'commerce_product_condition_product_is_of_type',
       'parameter' => array(
-        'product' => array('type' => 'commerce_product', 'label' => t('Product')),
+        'product' => array('type' => array('commerce_product', 'commerce_product_reference'), 'label' => t('Product')),
         'product_types' => array(
           'label' => t('Product types'),
           'type' => 'list<text>',
           'options list' => 'commerce_product_rules_condition_parameter_data',
-  				'restriction' => 'input',
+          'restriction' => 'input',
         ),
       ),
       'group' => t('Commerce'),
@@ -84,6 +84,21 @@ function commerce_product_rules_condition_parameter_data($element, $name) {
  * Provides the content type of a node as asserted metadata.
  */
 function commerce_product_condition_product_is_of_type($product, $types) {
+  // Handle commerce_product_reference data
+  if (is_array($product)) {
+    if (count($product)) {
+      foreach ( $product as $language => $deltas) {
+        foreach ( $deltas as $delta => $data) {
+          if (!($product_node = commerce_product_load($data['product_id'])) || !isset($types[$product_node->type])) {
+            return FALSE;
+          }
+        }
+      }
+      return TRUE;
+    }
+    return FALSE;
+  }
+
   return isset($types[$product->type]);
 }
 
