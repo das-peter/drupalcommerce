@@ -40,6 +40,7 @@ function commerce_line_item_entity_property_info() {
     'label' => t('Quantity'),
     'description' => t('Quantity associated with this line item'),
     'type' => 'integer',
+    'getter callback' => 'entity_metadata_verbatim_get',
   );
 
   // TODO: by das-peter - because I haven't really a clue what I'm doing here - review desperately needed
