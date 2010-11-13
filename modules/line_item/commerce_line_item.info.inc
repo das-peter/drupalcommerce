@@ -54,12 +54,14 @@ function commerce_line_item_entity_property_info() {
     'description' => t('Price per unit of this line item.'),
     'type' => 'commerce_price',
     'setter callback' => 'entity_metadata_verbatim_set',
+    'getter callback' => 'entity_metadata_verbatim_get',
   );
   $properties['total'] = array(
     'label' => t('Total'),
     'description' => t('Price of all units of this line item.'),
     'type' => 'commerce_price',
     'setter callback' => 'entity_metadata_verbatim_set',
+    'getter callback' => 'entity_metadata_verbatim_get',
   );
   return $info;
 }
