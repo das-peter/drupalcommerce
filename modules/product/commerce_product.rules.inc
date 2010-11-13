@@ -54,7 +54,7 @@ function commerce_product_rules_condition_info() {
       'help' => t('Evaluates to TRUE if the given product is of one of the selected product types.'),
       'base' => 'commerce_product_condition_product_is_of_type',
       'parameter' => array(
-        'product' => array('type' => array('commerce_product', 'commerce_product_reference'), 'label' => t('Product')),
+        'product' => array('type' => array('commerce_product'), 'label' => t('Product')),
         'product_types' => array(
           'label' => t('Product types'),
           'type' => 'list<text>',

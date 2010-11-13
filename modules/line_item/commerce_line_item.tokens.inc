@@ -99,6 +99,7 @@ function commerce_line_item_tokens($type, $tokens, array $data = array(), array 
         case 'changed':
           $replacements[$original] = format_date($line_item->changed, 'medium', '', NULL, $language_code);
           break;
+
       }
     }
   }

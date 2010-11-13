@@ -43,7 +43,6 @@ function commerce_line_item_entity_property_info() {
     'getter callback' => 'entity_metadata_verbatim_get',
   );
 
-  // TODO: by das-peter - because I haven't really a clue what I'm doing here - review desperately needed
   $properties['product'] = array(
     'label' => t('Product'),
     'description' => t('The product assigned to this line item.'),

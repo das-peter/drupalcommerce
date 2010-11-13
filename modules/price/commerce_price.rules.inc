@@ -17,27 +17,25 @@ function commerce_price_rules_event_info() {
     'commerce_price_alter' => array(
       'label' => t('Alter a price for display / purchase'),
       'group' => t('Commerce - price'),
-      'variables' => commerce_price_rules_variables(),
+      'variables' => array(
+        'price' => array(
+          'type' => 'commerce_price',
+          'label' => t('Price to modify'),
+        ),
+  			'product' => array(
+          'type' => 'commerce_product',
+          'label' => t('Product'),
+        ),
+  			'langocde' => array(
+          'type' => 'string',
+          'label' => t('Language code'),
+        ),
+      ),
       'access callback' => 'commerce_order_rules_access',
     ),
   );
 
   return $items;
-}
-
-/**
- * Returns parameters suitable for using Rules to alter prices.
- */
-function commerce_price_rules_variables($label = NULL) {
-  $label = (!$label) ? t('Price') : $label;
-  $args = array(
-    'price' => array(
-      'type' => 'commerce_price',
-      'label' => $label,
-    ),
-  );
-
-  return $args;
 }
 
 /**
