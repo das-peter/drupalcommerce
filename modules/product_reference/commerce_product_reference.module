@@ -565,6 +565,13 @@ function commerce_product_reference_field_views_data_alter(&$data, $field, $modu
   if ($field['type'] == 'commerce_product_reference') {
     $table = array_shift(array_keys($data));
 
+    // Build The entities and bundles this appears on.
+    $appears_on = array();
+    foreach ($field['bundles'] as $entity => $bundles) {
+      $appears_on[] = $entity . ' (' . implode(', ', $bundles) . ')';
+    }
+    $appears_on = implode(', ', $appears_on);
+
     // Add the relationship data to the proper product_id column.
     foreach (array_keys($data[$table]) as $key) {
       if (strpos($key, '_product_id') == strlen($key) - 11) {
@@ -574,10 +581,18 @@ function commerce_product_reference_field_views_data_alter(&$data, $field, $modu
           'field' => $key,
         );
 
+        // Create list with referencable types
+        $referenceable_types = array_filter($field['settings']['referenceable_types']);
+        $referenceable_types = implode(', ', $referenceable_types);
+        $referenceable_types = (!$referenceable_types) ? t('all types') : $referenceable_types;
+
         // Then add the relationship data to the field itself.
         $data[$table][$key]['relationship'] = array(
           'title' => t('Referenced product'),
-          'help' => t('The product referenced through this field.'),
+          'help' => t(
+            'Product Reference appears on !details references to !types',
+            array('!details' => $appears_on, '!types' => $referenceable_types)
+          ),
           'base' => 'commerce_product',
           'base field' => 'product_id',
           'handler' => 'views_handler_relationship',
