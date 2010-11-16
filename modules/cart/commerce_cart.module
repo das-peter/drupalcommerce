@@ -499,12 +499,16 @@ function commerce_cart_commerce_cart_qualified_field_value($field, $instance, $p
  * @return
  *   The form array.
  */
-function commerce_cart_add_to_cart_form($form, &$form_state, $product_ids, $show_quantity = FALSE, $default_quantity = 1, $context = array()) {
+function commerce_cart_add_to_cart_form($form, &$form_state, $product_ids, $show_quantity = FALSE, $default_quantity = 1, $context = array(), $form_id = NULL) {
   global $user;
+
+  if (!$form_id) {
+    $form_id = commerce_cart_add_to_cart_form_id($product_ids, $default_quantity);
+  }
 
   // Store the form ID as a class of the form to avoid the incrementing form ID
   // from causing the AJAX refresh not to work.
-  $form['#attributes']['class'][] = drupal_html_class(commerce_cart_add_to_cart_form_id($product_ids, $default_quantity));
+  $form['#attributes']['class'][] = drupal_html_class($form_id);
 
   // Store the customer uid in the form so other modules can override with a
   // selection widget if necessary.
