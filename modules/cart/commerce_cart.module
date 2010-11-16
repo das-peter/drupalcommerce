@@ -999,7 +999,7 @@ function commerce_cart_field_formatter_view($entity_type, $object, $field, $inst
 
     $result[] = array(
       '#arguments' => array(
-        'form_id' => commerce_cart_add_to_cart_form_id($product_ids),
+        'form_id' => commerce_cart_add_to_cart_form_id($product_ids, $settings['default_quantity']),
         'product_ids' => $product_ids,
         'show_quantity' => $settings['show_quantity'],
         'default_quantity' => $settings['default_quantity'],
