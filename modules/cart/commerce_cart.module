@@ -18,7 +18,7 @@ function commerce_cart_menu() {
 
   $items['cart'] = array(
     'title' => t('Shopping cart'),
-    'page callback' => 'commerce_cart_view',
+    'page callback' => array('commerce_cart_view'),
     'access arguments' => array('access content'),
     'file' => 'includes/commerce_cart.pages.inc',
   );
@@ -576,18 +576,6 @@ function commerce_cart_add_to_cart_form($form, &$form_state, $product_ids, $show
               $changed_attribute = $key;
             }
 
-            // If a field name has been stored and we've moved past it to
-            // compare the next attribute field...
-            if (!empty($changed_attribute) && $changed_attribute != $key) {
-              // Wipe subsequent values from the form state so they attribute
-              // widgets can use the default values from the new default product.
-              unset($form_states['values']['attributes'][$key]);
-              unset($form_states['values']['unchanged_attributes'][$key]);
-
-              // Don't accept this as a matching product.
-              continue;
-            }
-
             if ($product->{$key}[LANGUAGE_NONE][0]['value'] != $value) {
               $match = FALSE;
             }
@@ -598,7 +586,8 @@ function commerce_cart_add_to_cart_form($form, &$form_state, $product_ids, $show
           // exception is granted for additional matching products that share
           // the exact same attribute values as the first.
           if ($match && !empty($changed_attribute) && !empty($matching_products)) {
-            $matching_product = $matching_products[array_shift(array_keys($matching_products))];
+            $matching_product_keys = array_keys($matching_products);
+            $matching_product = $matching_products[array_shift($matching_product_keys)];
 
             foreach ((array) array_diff_key($form_state['values']['attributes'], array('product_select' => '')) as $key => $value) {
               if ($product->{$key}[LANGUAGE_NONE][0]['value'] != $matching_product->{$key}[LANGUAGE_NONE][0]['value']) {
