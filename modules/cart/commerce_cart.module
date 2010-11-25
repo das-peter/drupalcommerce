@@ -448,30 +448,6 @@ function commerce_cart_forms($form_id, $args) {
 }
 
 /**
- * Returns an array with possible values
- * @param $field
- * @param $instance
- */
-function commerce_cart_commerce_cart_qualified_fields($field, $instance, $default_product) {
-  $options = array();
-  if ($instance['widget']['module'] == 'options') {
-    // Get the options properties from the options module and store the
-    // options for the instance in select list format in the array of
-    // qualifying fields.
-    $properties = _options_properties('select', FALSE, TRUE, TRUE);
-
-    $options = _options_get_options($field, $instance, $properties);
-  }
-  return $options;
-}
-
-function commerce_cart_commerce_cart_qualified_field_value($field, $instance, $product) {
-  if ($instance['widget']['module'] == 'options') {
-    return $product->{$field['field_name']}[LANGUAGE_NONE][0]['value'];
-  }
-}
-
-/**
  * Builds an Add to Cart form for a set of products.
  *
  * @param $product_ids
@@ -576,6 +552,17 @@ function commerce_cart_add_to_cart_form($form, &$form_state, $product_ids, $show
               $changed_attribute = $key;
             }
 
+            // If a field name has been stored and we've moved past it to
+            // compare the next attribute field...
+            if (!empty($changed_attribute) && $changed_attribute != $key) {
+              // Wipe subsequent values from the form state so they attribute
+              // widgets can use the default values from the new default product.
+              unset($form_states['values']['attributes'][$key]);
+              unset($form_states['values']['unchanged_attributes'][$key]);
+
+              // Don't accept this as a matching product.
+              continue;
+            }
             if ($product->{$key}[LANGUAGE_NONE][0]['value'] != $value) {
               $match = FALSE;
             }
@@ -637,20 +624,18 @@ function commerce_cart_add_to_cart_form($form, &$form_state, $product_ids, $show
           // currently restricted to fields defined by the options module.
           $field = field_info_field($instance['field_name']);
 
-          if ($field['cardinality'] == 1 && $instance['required']) {
+          if ($field['cardinality'] == 1 && $instance['required'] && $instance['widget']['module'] == 'options') {
+            // Get the options properties from the options module and store the
+            // options for the instance in select list format in the array of
+            // qualifying fields.
+            $properties = _options_properties('select', FALSE, TRUE, TRUE);
 
-            // Get the options properties for the instance and store it for the
-            // attribute selection
-            $options = module_invoke_all('commerce_cart_qualified_fields', $field,  $instance, $default_product);
-            if ($options) {
-              $qualifying_fields[$name] = array(
-                'field' => $field,
-                'instance' => $instance,
-                //'options' => _options_get_options($field, $instance, $properties),
-                'options' => $options,
-                'weight' => $instance['widget']['weight'],
-              );
-            }
+            $qualifying_fields[$name] = array(
+              'field' => $field,
+              'instance' => $instance,
+              'options' => _options_get_options($field, $instance, $properties),
+              'weight' => $instance['widget']['weight'],
+            );
           }
         }
       }
@@ -674,25 +659,14 @@ function commerce_cart_add_to_cart_form($form, &$form_state, $product_ids, $show
                 continue;
               }
 
-              $value = module_invoke_all('commerce_cart_qualified_field_value', $data['field'], $data['instance'], $product);
-
               if ($product->{$used_field_name}[LANGUAGE_NONE][0]['value'] != $form['attributes'][$used_field_name]['#default_value']) {
-                continue 2;
-              }
-            }
-
-            // Try to determine the value we have to use for this field
-            foreach (module_implements('commerce_cart_qualified_field_value') as $module) {
-              $value = module_invoke($module, 'commerce_cart_qualified_field_value', $data['field'], $data['instance'], $product);
-              if ($value) {
-                $used_options[$field_name][] = $value;
                 continue 2;
               }
             }
 
             // With our hard dependency on widgets provided by the Options
             // module, we can make assumptions about where the data is stored.
-            // $product->{$field_name}[LANGUAGE_NONE][0]['value'];
+            $used_options[$field_name][] = $product->{$field_name}[LANGUAGE_NONE][0]['value'];
           }
 
           // If for some reason no options for this field are used, remove it
