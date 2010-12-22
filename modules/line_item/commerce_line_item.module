@@ -159,6 +159,11 @@ function commerce_line_item_permission() {
       'description' => t('View and configure fields attached to module defined line item types.'),
       'restrict access' => TRUE,
     ),
+    'administer line items' => array(
+      'title' => t('Administer line items'),
+      'description' => t('Update and delete any line item on the site.'),
+      'restrict access' => TRUE,
+    ),
   );
 
   return $permissions;
@@ -203,41 +208,6 @@ function commerce_line_item_field_attach_delete($entity_type, $entity) {
   // Delete the line items if any were found.
   if (!empty($line_item_ids)) {
     commerce_line_item_delete_multiple($line_item_ids);
-  }
-}
-
-/**
- * Implements hook_commerce_line_item_delete().
- *
- * When a line item is deleted, any references to the line item should also be
- * deleted. We don't know where these might exist, so we loop through every
- * defined field in search of line item reference fields to purge.
- */
-function commerce_line_item_commerce_line_item_delete($line_item) {
-  // Find every line item reference field.
-  foreach (field_info_fields() as $name => $field) {
-    if ($field['type'] == 'commerce_line_item_reference') {
-      // Look in the field's data for any entities that reference the line item
-      // being deleted.
-      $result = db_query('SELECT * FROM {field_data_' . $name . '} AS fd LEFT JOIN {field_config_entity_type} AS fc ON fd.etid = fc.etid WHERE line_items_line_item_id = :line_item_id', array(':line_item_id' => $line_item->line_item_id));
-
-      // If the line item was found referenced by an entity...
-      foreach ($result as $row) {
-        // Load the entity.
-        $entities = entity_load($row->type, array($row->entity_id));
-        $entity = $entities[$row->entity_id];
-
-        // Remove the line item from its reference field.
-        unset($entity->{$name}[$row->language][$row->delta]);
-
-        // Reset the delta values for referenced line items.
-        $entity->{$name}[$row->language] = array_merge($entity->{$name}[$row->language], array());
-
-        // Save the updated field data.
-        field_attach_presave($row->type, $entity);
-        field_attach_update($row->type, $entity);
-      }
-    }
   }
 }
 
@@ -408,7 +378,7 @@ function commerce_line_item_new($type = '') {
 }
 
 /**
- * Creation callback for the Entity Metadata module.
+ * Creation callback for the Entity module.
  */
 function _commerce_line_item_create($values = array()) {
   // Create a new line item of the specified type.
@@ -511,17 +481,6 @@ function commerce_line_item_access($op, $line_item, $account = NULL) {
   // TODO: Implement actual access control for line items.
 
   return TRUE;
-}
-/**
- * Handler to load the unchanged line item variable for rules.
- * @see commerce_line_item_rules_variables().
- */
-function commerce_line_item_rules_var_unchanged($line_item) {
-  $unchanged = drupal_static('commerce_line_item_unchanged');
-
-  if (isset($line_item->line_item_id) && isset($unchanged[$line_item->line_item_id])) {
-    return $unchanged[$line_item->line_item_id];
-  }
 }
 
 /**
@@ -720,13 +679,13 @@ function commerce_line_item_field_widget_form(&$form, &$form_state, $field, $ins
       $widget_form = _field_invoke_default('form', 'commerce_line_item', $line_item, $form, $form_state, array('field_name' => 'unit_price'));
 
       // Unset the title and description and add it to the line item form.
-      unset($widget_form['unit_price'][LANGUAGE_NONE][0]['price']['#title']);
-      unset($widget_form['unit_price'][LANGUAGE_NONE][0]['price']['#description']);
+      unset($widget_form['unit_price'][LANGUAGE_NONE][0]['amount']['#title']);
+      unset($widget_form['unit_price'][LANGUAGE_NONE][0]['amount']['#description']);
 
       $element['line_items'][$line_item_id]['unit_price'] = $widget_form['unit_price'];
 
       $element['line_items'][$line_item_id]['total'] = array(
-        '#markup' => commerce_currency_format($line_item->total[LANGUAGE_NONE][0]['price'], $line_item->total[LANGUAGE_NONE][0]['currency_code'], $line_item),
+        '#markup' => commerce_currency_format($line_item->total[LANGUAGE_NONE][0]['amount'], $line_item->total[LANGUAGE_NONE][0]['currency_code'], $line_item),
       );
     }
 
@@ -875,11 +834,11 @@ function commerce_line_item_manager_validate($element, &$form_state, $form) {
       // Manually validate the unit price of each line item.
       $unit_price = $form_state['values']['line_items'][$element['#language']]['line_items'][$line_item_id]['unit_price'];
 
-      if (is_numeric($unit_price[$element['#language']][0]['price'])) {
+      if (is_numeric($unit_price[$element['#language']][0]['amount'])) {
         $line_item->unit_price = $unit_price;
       }
       else {
-        $name = implode('][', array_merge($element['line_items'][$line_item_id]['unit_price']['#parents'], array($element['#language'], 0, 'price')));
+        $name = implode('][', array_merge($element['line_items'][$line_item_id]['unit_price']['#parents'], array($element['#language'], 0, 'amount')));
         form_set_error($name, 'You must enter a numeric value for the unit price.');
       }
 
@@ -1017,7 +976,7 @@ function commerce_line_items_quantity($value, $type = '', $language = '') {
  *   The language within the value array to use; defaults to LANGUAGE_NONE.
  *
  * @return
- *   An associative array of containing the total 'price' and 'currency_code' of
+ *   An associative array of containing the total 'amount' and 'currency_code' of
  *     the referenced line items.
  */
 function commerce_line_items_total($value, $type = '', $language = '') {
@@ -1049,11 +1008,11 @@ function commerce_line_items_total($value, $type = '', $language = '') {
         }
       }
 
-      $total += $line_item->total[$language][0]['price'];
+      $total += $line_item->total[$language][0]['amount'];
     }
   }
 
-  return array('price' => $total, 'currency_code' => $currency_code);
+  return array('amount' => $total, 'currency_code' => $currency_code);
 }
 
 /**

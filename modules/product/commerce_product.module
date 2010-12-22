@@ -331,7 +331,7 @@ function commerce_product_new($type = '') {
 }
 
 /**
- * Creation callback for the Entity Metadata module.
+ * Creation callback for the Entity module.
  */
 function _commerce_product_create($values = array()) {
   // Create a new product of the specified type.
@@ -810,16 +810,4 @@ function _commerce_product_match_products_standard($field, $string = '', $match 
   }
 
   return $matches;
-}
-
-/**
- * Handler to load the unchanged product variable for rules.
- * @see commerce_product_rules_variables().
- */
-function commerce_product_rules_var_unchanged($product) {
-  $unchanged = drupal_static('commerce_product_unchanged');
-
-  if (isset($product->product_id) && isset($unchanged[$product->product_id])) {
-    return $unchanged[$product->product_id];
-  }
 }

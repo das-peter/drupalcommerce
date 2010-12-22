@@ -230,7 +230,7 @@ function commerce_order_new($uid = 0, $status = '', $type = 'commerce_order') {
 }
 
 /**
- * Creation callback for the Entity Metadata module.
+ * Creation callback for the Entity module.
  */
 function _commerce_order_create($values = array()) {
   // Create a new order owned by the specified user.
@@ -929,17 +929,5 @@ function commerce_order_get_properties($order, array $options, $name) {
 function commerce_order_set_properties($order, $name, $value) {
   if ($name == 'owner') {
     $order->uid = $value;
-  }
-}
-
-/**
- * Handler to load the unchanged order variable for rules.
- * @see commerce_order_rules_variables().
- */
-function commerce_order_rules_var_unchanged($order) {
-  $unchanged = drupal_static('commerce_order_unchanged');
-
-  if (isset($order->order_id) && isset($unchanged[$order->order_id])) {
-    return $unchanged[$order->order_id];
   }
 }

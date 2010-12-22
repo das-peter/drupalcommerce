@@ -534,7 +534,7 @@ function commerce_payment_transaction_new($method_id = '', $order_id = 0) {
 }
 
 /**
- * Creation callback for the Entity Metadata module.
+ * Creation callback for the Entity module.
  */
 function _commerce_payment_transaction_create($values = array()) {
   // Create a new transaction of the specified type.
@@ -615,19 +615,6 @@ function commerce_payment_transaction_delete($transaction_id) {
  */
 function commerce_payment_transaction_delete_multiple($transaction_ids) {
   return entity_get_controller('commerce_payment_transaction')->delete($transaction_ids);
-}
-
-/**
- * Handler to load the unchanged line item variable for rules.
- *
- * @see commerce_payment_rules_variables().
- */
-function commerce_payment_transaction_rules_var_unchanged($transaction) {
-  $unchanged = drupal_static('commerce_payment_transaction_unchanged');
-
-  if (isset($transaction->transaction_id) && isset($unchanged[$transaction->transaction_id])) {
-    return $unchanged[$transaction->transaction_id];
-  }
 }
 
 /**
@@ -829,10 +816,10 @@ function commerce_payment_order_balance($order, $totals = array()) {
 
   // Only return a balance if the totals array contains a single matching currency.
   if (count($totals) == 1 && isset($totals[$order_total['currency_code']])) {
-    return array('amount' => $order_total['price'] - $totals[$order_total['currency_code']], 'currency_code' => $order_total['currency_code']);
+    return array('amount' => $order_total['amount'] - $totals[$order_total['currency_code']], 'currency_code' => $order_total['currency_code']);
   }
   elseif (empty($totals)) {
-    return array('amount' => $order_total['price'], 'currency_code' => $order_total['currency_code']);
+    return array('amount' => $order_total['amount'], 'currency_code' => $order_total['currency_code']);
   }
   else {
     return FALSE;

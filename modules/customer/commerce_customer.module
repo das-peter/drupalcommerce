@@ -267,7 +267,7 @@ function commerce_customer_profile_new($type = '', $uid = 0) {
 }
 
 /**
- * Creation callback for the Entity Metadata module.
+ * Creation callback for the Entity module.
  */
 function _commerce_customer_profile_create($values = array()) {
   // Create a new customer profile for the specified user.
@@ -502,18 +502,6 @@ function commerce_customer_profile_get_properties($profile, array $options, $nam
 function commerce_customer_profile_set_properties($profile, $name, $value) {
   if ($name == 'user') {
     $profile->uid = $value;
-  }
-}
-
-/**
- * Handler to load the unchanged customer profile variable for rules.
- * @see commerce_customer_rules_variables().
- */
-function commerce_customer_profile_rules_var_unchanged($profile) {
-  $unchanged = drupal_static('commerce_customer_profile_unchanged');
-
-  if (isset($profile->profile_id) && isset($unchanged[$profile->profile_id])) {
-    return $unchanged[$profile->profile_id];
   }
 }
 
