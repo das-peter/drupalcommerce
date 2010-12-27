@@ -238,6 +238,13 @@ function commerce_customer_profile_type_get_name($type = NULL) {
 }
 
 /**
+ * Wraps commerce_customer_profile_type_get_name() for the Entity module.
+ */
+function commerce_customer_profile_type_options_list() {
+  return commerce_customer_profile_type_get_name();
+}
+
+/**
  * Title callback: return the human-readable customer profile type name.
  */
 function commerce_customer_profile_type_title($profile_type) {
@@ -485,27 +492,6 @@ function commerce_customer_configure_customer_profile_type($type) {
 }
 
 /**
- * Callback for getting customer profile properties.
- * @see commerce_customer_entity_property_info()
- */
-function commerce_customer_profile_get_properties($profile, array $options, $name) {
-  switch ($name) {
-    case 'user':
-      return $profile->uid;
-  }
-}
-
-/**
- * Callback for setting customer profile properties.
- * @see commerce_customer_entity_property_info()
- */
-function commerce_customer_profile_set_properties($profile, $name, $value) {
-  if ($name == 'user') {
-    $profile->uid = $value;
-  }
-}
-
-/**
  * Implements hook_field_info().
  */
 function commerce_customer_field_info() {
@@ -710,8 +696,8 @@ function commerce_customer_options_list($field) {
   }
 
   // Simplify the options list if only one optgroup exists.
-  if (count(array_keys($options)) == 1) {
-    $options = $options[array_shift(array_keys($options))];
+  if (count($options) == 1) {
+    $options = reset($options);
   }
 
   return $options;
@@ -950,4 +936,27 @@ function _commerce_customer_match_customer_profiles_standard($field, $ids = arra
   }
 
   return $matches;
+}
+
+/**
+ * Callback for getting customer profile properties.
+ *
+ * @see commerce_customer_entity_property_info()
+ */
+function commerce_customer_profile_get_properties($profile, array $options, $name) {
+  switch ($name) {
+    case 'user':
+      return $profile->uid;
+  }
+}
+
+/**
+ * Callback for setting customer profile properties.
+ *
+ * @see commerce_customer_entity_property_info()
+ */
+function commerce_customer_profile_set_properties($profile, $name, $value) {
+  if ($name == 'user') {
+    $profile->uid = $value;
+  }
 }

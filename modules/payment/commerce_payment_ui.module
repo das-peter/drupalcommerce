@@ -69,6 +69,10 @@ function commerce_payment_ui_menu() {
     'file' => 'includes/commerce_payment_ui.admin.inc',
   );
 
+  // Add the menu items for the various Rules forms.
+  $controller = new RulesUIController();
+  $items += $controller->config_menu('admin/commerce/config/payment');
+
   return $items;
 }
 
@@ -82,6 +86,15 @@ function commerce_payment_ui_menu() {
  */
 function commerce_payment_ui_payment_transaction_title($transaction) {
   return t('Transaction @transaction_id', array('@transaction_id' => $transaction->transaction_id));
+}
+
+/**
+ * Implements hook_help().
+ */
+function commerce_payment_ui_help($path, $arg) {
+  if ($path == 'admin/commerce/config/payment') {
+    return t("Payment methods are enabled for use by the rule configurations listed below. An enabled payment rule can specify a payment method to enable using one of the available <em>Enable payment method</em> actions. The action's settings form will contain any necessary settings for the payment method that must be configured before it may be used.");
+  }
 }
 
 /**
