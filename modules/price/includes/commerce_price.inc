@@ -30,7 +30,7 @@ class CommercePrice {
 
     $this->base_currency_code = $currency_code;
 
-    $this->modifyPrice('commerce_price', t('Base price'), $this->base_price, $this->base_currency_code);
+    $this->modifyPrice('commerce_price', t('Base price'), $this->base_amount, $this->base_currency_code);
   }
 
   /**
