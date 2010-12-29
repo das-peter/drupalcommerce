@@ -125,7 +125,7 @@ function commerce_product_rules_condition_parameter_data($element, $name) {
  * Check if the give product matches one of the given types.
  *
  * @param commerce_product|array
- * 	 Handles product objects or arrays provided by commerce_product_refrence.
+ *   Handles product objects or arrays provided by commerce_product_refrence.
  * @return boolean
  */
 function commerce_product_condition_product_is_of_type($product, $types) {
@@ -143,7 +143,6 @@ function commerce_product_condition_product_is_of_type($product, $types) {
     }
     return FALSE;
   }
-
   return isset($types[$product->type]);
 }
 
