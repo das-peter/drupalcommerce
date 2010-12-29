@@ -150,6 +150,17 @@ function commerce_line_item_rules_action_info() {
     'group' => t('Commerce Line Item'),
   );
 
+  $actions['commerce_line_item_calculate_total'] = array(
+    'label' => t('Calculate the total'),
+    'parameter' => array(
+      'line_item' => array(
+        'type' => 'commerce_line_item',
+        'label' => t('Line item'),
+      ),
+    ),
+    'group' => t('Commerce Line Item'),
+  );
+
   return $actions;
 }
 
@@ -209,6 +220,19 @@ function commerce_line_item_unit_price_amount($line_item, $amount) {
 function commerce_line_item_unit_price_currency_code($line_item, $currency_code) {
   $wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
   $wrapper->unit_price->currency_code = $currency_code;
+}
+
+/**
+ * Recalculate the total price of the line item.
+ * Usefull if unit_price is changed by a rule / hook.
+ *
+ * @param stdClass $line_item
+ */
+function commerce_line_item_calculate_total($line_item) {
+  // Update the total of the line item based on the quantity and unit price.
+  $wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
+  $wrapper->total->currency_code = $wrapper->unit_price->currency_code->value();
+  $wrapper->total->amount = $wrapper->unit_price->amount->value() * $wrapper->quantity->value();
 }
 
 /**
