@@ -42,11 +42,6 @@ function commerce_line_item_entity_property_info() {
     'type' => 'integer',
     'required' => TRUE,
   );
-  $properties['product'] = array(
-    'label' => t('Product'),
-    'description' => t('The product assigned to this line item.'),
-    'type' => 'commerce_product_reference',
-  );
   $properties['created'] = array(
     'label' => t('Date created'),
     'description' => t('The date the line item was created.'),
