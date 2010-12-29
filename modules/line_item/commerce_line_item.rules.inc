@@ -137,8 +137,8 @@ function commerce_line_item_rules_action_info() {
   $actions['commerce_line_item_unit_price_currency_code'] = array(
     'label' => t("Set the unit price's currency code"),
     'parameter' => array(
-      'line_item' => array(
-        'type' => 'commerce_line_item',
+      'line_item_id' => array(
+        'type' => 'integer',
         'label' => t('Line item'),
       ),
       'currency_code' => array(
