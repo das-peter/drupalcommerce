@@ -21,3 +21,6 @@ files[] = includes/views/handlers/commerce_product_handler_field_product_operati
 
 ; Simple tests
 files[] = tests/commerce_product.test
+
+; Features Integration
+files[] = commerce_product.features.inc
