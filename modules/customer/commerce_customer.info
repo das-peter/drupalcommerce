@@ -19,3 +19,6 @@ files[] = includes/views/handlers/commerce_customer_handler_filter_customer_prof
 
 ; Simple tests
 ; files[] = tests/commerce_customer.test
+
+; Features Integration
+files[] = commerce_customer.features.inc
