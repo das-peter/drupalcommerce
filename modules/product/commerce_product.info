@@ -21,3 +21,6 @@ files[] = includes/views/handlers/commerce_product_handler_field_product_operati
 
 ; Simple tests
 files[] = tests/commerce_product.test
+
+; Translation handler
+files[] = includes/translation.handler.commerce_product.inc
