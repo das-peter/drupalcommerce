@@ -41,7 +41,7 @@ function commerce_product_product_form($form, &$form_state, $product) {
 
   // Add the field related form elements.
   $form_state['commerce_product'] = $product;
-  field_attach_form('commerce_product', $product, $form, $form_state);
+  field_attach_form('commerce_product', $product, $form, $form_state, $product->language);
 
   $form['status'] = array(
     '#type' => 'radios',
@@ -60,6 +60,12 @@ function commerce_product_product_form($form, &$form_state, $product) {
     '#type' => 'container',
     '#attributes' => array('class' => array('form-actions')),
     '#weight' => 40,
+  );
+
+  // Simply use default language
+  $form['language'] = array(
+    '#type' => 'value',
+    '#value' => $product->language,
   );
 
   // We add the form's #submit array to this button along with the actual submit
@@ -128,6 +134,7 @@ function commerce_product_product_form_submit($form, &$form_state) {
   $product->sku = $form_state['values']['sku'];
   $product->title = $form_state['values']['title'];
   $product->status = $form_state['values']['status'];
+  $product->language = $form_state['values']['language'];
 
   // Set the product's uid if it's being created at this time.
   if (empty($product->product_id)) {

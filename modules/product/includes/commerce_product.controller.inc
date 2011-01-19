@@ -32,6 +32,7 @@ class CommerceProductEntityController extends DrupalDefaultEntityController {
       'status' => 1,
       'created' => '',
       'changed' => '',
+      'language' => LANGUAGE_NONE,
     );
   }
 
