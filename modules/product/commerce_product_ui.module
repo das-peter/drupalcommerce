@@ -432,7 +432,7 @@ function commerce_product_ui_form_commerce_product_ui_product_form_alter(&$form,
   $form['actions']['submit']['#submit'][] = 'commerce_product_ui_product_form_submit';
 
   // If translation support is enabled - provide the suitable languages
-  if (module_exists('translation') && translation_enabled('commerce_product')) {
+  if (module_exists('translation') && function_exists('translation_enabled') && translation_enabled('commerce_product')) {
     $form['language'] = array(
       '#type' => 'select',
       '#title' => t('Language'),
@@ -484,7 +484,7 @@ function commerce_product_ui_product_form_submit($form, &$form_state) {
  */
 function commerce_product_ui_product_form_translation_processing($form, &$form_state) {
   // If translation support is enabled - make sure language changes are handled.
-  if (module_exists('translation') && translation_enabled('commerce_product')) {
+  if (module_exists('translation') && function_exists('translation_enabled') && translation_enabled('commerce_product')) {
     $available_languages = field_content_languages();
     list(, , $bundle) = entity_extract_ids('commerce_product', $form_state['commerce_product']);
 
