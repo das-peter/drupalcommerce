@@ -49,6 +49,29 @@ function commerce_product_reference_field_extra_fields() {
 }
 
 /**
+ * Implements hook_form_FORMID_alter().
+ *
+ * Override the field manage display screen to add a description to the fields
+ * we embed into the target node from the product.
+ */
+function commerce_product_reference_form_field_ui_display_overview_form_alter(&$form, &$form_state) {
+  if (!module_exists('commerce_product_ui')) {
+    return;
+  }
+
+  $entity_type = $form['#entity_type'];
+  $bundle = $form['#bundle'];
+
+  $product_fields = commerce_product_reference_field_extra_fields();
+
+  if (isset($product_fields[$entity_type][$bundle])) {
+    foreach ($product_fields[$entity_type][$bundle]['display'] as $field_name => $field) {
+      $form['fields'][$field_name]['format']['type']['#description'] = t('Modify the settings for this field on the <a href="@url">product display configuration</a>.', array('@url' => url('admin/commerce/products/types')));
+    }
+  }
+}
+
+/**
  * Implements hook_node_view().
  *
  * This implementation adds product fields to the content array of a node on
@@ -429,8 +452,8 @@ function commerce_product_reference_field_info() {
     'commerce_product_reference' => array(
       'label' => t('Product reference'),
       'description' => t('This field stores the ID of a related product as an integer value.'),
-      'settings' => array('referenceable_types' => array()),
-      'instance_settings' => array(),
+      'settings' => array(),
+      'instance_settings' => array('referenceable_types' => array()),
       'default_widget' => 'options_select',
       'default_formatter' => 'commerce_product_reference_title_link',
       'property_type' => 'commerce_product',
@@ -442,8 +465,8 @@ function commerce_product_reference_field_info() {
 /**
  * Implements hook_field_settings_form().
  */
-function commerce_product_reference_field_settings_form($field, $instance, $has_data) {
-  $settings = $field['settings'];
+function commerce_product_reference_field_instance_settings_form($field, $instance) {
+  $settings = $instance['settings'];
   $options = array();
   $form = array();
 
@@ -459,7 +482,6 @@ function commerce_product_reference_field_settings_form($field, $instance, $has_
     '#options' => $options,
     '#default_value' => is_array($settings['referenceable_types']) ? $settings['referenceable_types'] : array(),
     '#multiple' => TRUE,
-    '#disabled' => $has_data,
   );
 
   return $form;
@@ -493,7 +515,7 @@ function commerce_product_reference_field_validate($entity_type, $object, $field
 
   // Prevent performance hog if there are no ids to check.
   if ($product_ids) {
-    $refs = commerce_product_match_products($field, '', NULL, $product_ids);
+    $refs = commerce_product_match_products($field, $instance, '', NULL, $product_ids);
 
     foreach ($items as $delta => $item) {
       if (is_array($item)) {
@@ -756,7 +778,7 @@ function commerce_product_reference_field_widget_form(&$form, &$form_state, $fie
     return $element + array(
       '#type' => 'textfield',
       '#default_value' => implode(', ', $skus),
-      '#autocomplete_path' => $instance['widget']['settings']['autocomplete_path'] . '/' . $field['field_name'],
+      '#autocomplete_path' => $instance['widget']['settings']['autocomplete_path'] . '/' . $instance['entity_type'] . '/' . $field['field_name'] . '/' . $instance['bundle'],
       '#size' => $instance['widget']['settings']['size'],
       '#element_validate' => array('commerce_product_reference_autocomplete_validate'),
     );
@@ -894,13 +916,6 @@ function commerce_product_reference_field_views_data_alter(&$data, $field, $modu
     $keys = array_keys($data);
     $table = array_shift($keys);
 
-    // Build The entities and bundles this appears on.
-    $appears_on = array();
-    foreach ($field['bundles'] as $entity => $bundles) {
-      $appears_on[] = $entity . ' (' . implode(', ', $bundles) . ')';
-    }
-    $appears_on = implode(', ', $appears_on);
-
     // Add the relationship data to the proper product_id column.
     foreach (array_keys($data[$table]) as $key) {
       if (strpos($key, '_product_id') == strlen($key) - 11) {
@@ -910,18 +925,17 @@ function commerce_product_reference_field_views_data_alter(&$data, $field, $modu
           'field' => $key,
         );
 
-        // Create list with referencable types
-        $referenceable_types = array_filter($field['settings']['referenceable_types']);
-        $referenceable_types = implode(', ', $referenceable_types);
-        $referenceable_types = (!$referenceable_types) ? t('all types') : $referenceable_types;
+        // Build the bundles this field appears on, noted per entity.
+        $bundles = array();
+
+        foreach ($field['bundles'] as $entity => $bundles) {
+          $bundles[] = $entity . ' (' . implode(', ', $bundles) . ')';
+        }
 
         // Then add the relationship data to the field itself.
         $data[$table][$key]['relationship'] = array(
           'title' => t('Referenced product'),
-          'help' => t(
-            'Product Reference appears on !details references to !types',
-            array('!details' => $appears_on, '!types' => $referenceable_types)
-          ),
+          'help' => t('Appears in: @bundles', array('@bundles' => implode(', ', $bundles))),
           'base' => 'commerce_product',
           'base field' => 'product_id',
           'handler' => 'views_handler_relationship',
@@ -940,6 +954,11 @@ function commerce_product_reference_field_views_data_alter(&$data, $field, $modu
  * as specified above.
  */
 function commerce_product_reference_configure_line_item() {
+  // If a field type we know should exist isn't found, clear the Field cache.
+  if (!field_info_field_types('commerce_product_reference')) {
+    field_clear_cache();
+  }
+
   $field = field_info_field('product');
   $instance = field_info_instance('commerce_line_item', 'product', 'product');
 
