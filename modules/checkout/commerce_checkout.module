@@ -424,7 +424,7 @@ function commerce_checkout_panes($conditions = array()) {
     foreach ($checkout_panes as $pane_id => $checkout_pane) {
       // Update the pane with saved data.
       if (!empty($saved_panes[$pane_id])) {
-        $checkout_pane = (object) array_merge((array) $saved_panes[$pane_id] + (array) $checkout_pane);
+        $checkout_pane = (object) array_merge((array) $checkout_pane + (array) $saved_panes[$pane_id]);
         $checkout_pane->saved = TRUE;
       }
 
