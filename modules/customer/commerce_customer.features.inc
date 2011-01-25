@@ -28,6 +28,7 @@ function commerce_customer_features_api() {
  * it's done here :)
  */
 function commerce_customer_customer_default_types() {
+  return array();
   return commerce_customer_commerce_customer_profile_info();
 }
 
