@@ -182,9 +182,9 @@ function commerce_line_item_enable() {
 function commerce_line_item_modules_enabled($modules) {
   // Loop through all the enabled modules.
   foreach ($modules as $module) {
-    // If the module implements hook_commerce_line_item_info()...
-    if (module_hook($module, 'commerce_line_item_info')) {
-      $line_item_types = module_invoke($module, 'commerce_line_item_info');
+    // If the module implements hook_commerce_line_item_type_info()...
+    if (module_hook($module, 'commerce_line_item_type_info')) {
+      $line_item_types = module_invoke($module, 'commerce_line_item_type_info');
 
       // Loop through and configure the line item types defined by the module.
       foreach ($line_item_types as $line_item_type) {
@@ -325,8 +325,8 @@ function commerce_line_item_types() {
 
   // If it did not exist, fetch the types now.
   if (!isset($line_item_types)) {
-    $line_item_types = module_invoke_all('commerce_line_item_info');
-    drupal_alter('commerce_line_item_info', $line_item_types);
+    $line_item_types = module_invoke_all('commerce_line_item_type_info');
+    drupal_alter('commerce_line_item_type_info', $line_item_types);
 
     foreach ($line_item_types as $type => &$line_item_type) {
       $defaults = array(
@@ -416,8 +416,8 @@ function commerce_line_item_configure_line_item_type($line_item_type) {
   // Add the default price fields to the line item type.
   $weight = 0;
 
-  foreach (array('unit_price' => t('Unit price'), 'total' => t('Total')) as $name => $label) {
-    commerce_price_create_instance($name, 'commerce_line_item', $line_item_type->type, $label, $weight++);
+  foreach (array('commerce_unit_price' => t('Unit price'), 'commerce_total' => t('Total')) as $field_name => $label) {
+    commerce_price_create_instance($field_name, 'commerce_line_item', $line_item_type->type, $label, $weight++);
   }
 
   // If this line item type specifies a configuration callback...
@@ -474,12 +474,14 @@ function commerce_line_item_type_callback($line_item_type, $callback) {
  *
  * @param $type
  *   The machine-readable type of the line item.
+ * @param $order_id
+ *   The ID of the order the line item belongs to (if available).
  *
  * @return
  *   A line item object with all default fields initialized.
  */
-function commerce_line_item_new($type = '') {
-  return entity_get_controller('commerce_line_item')->create($type);
+function commerce_line_item_new($type = '', $order_id = 0) {
+  return entity_get_controller('commerce_line_item')->create($type, $order_id);
 }
 
 /**
@@ -842,16 +844,16 @@ function commerce_line_item_field_widget_form(&$form, &$form_state, $field, $ins
       );
 
       // Retrieve the widget form for just the unit price.
-      $widget_form = _field_invoke_default('form', 'commerce_line_item', $line_item, $form, $form_state, array('field_name' => 'unit_price'));
+      $widget_form = _field_invoke_default('form', 'commerce_line_item', $line_item, $form, $form_state, array('field_name' => 'commerce_unit_price'));
 
       // Unset the title and description and add it to the line item form.
-      unset($widget_form['unit_price'][LANGUAGE_NONE][0]['amount']['#title']);
-      unset($widget_form['unit_price'][LANGUAGE_NONE][0]['amount']['#description']);
+      unset($widget_form['commerce_unit_price'][LANGUAGE_NONE][0]['amount']['#title']);
+      unset($widget_form['commerce_unit_price'][LANGUAGE_NONE][0]['amount']['#description']);
 
-      $element['line_items'][$line_item_id]['unit_price'] = $widget_form['unit_price'];
+      $element['line_items'][$line_item_id]['commerce_unit_price'] = $widget_form['commerce_unit_price'];
 
-      $element['line_items'][$line_item_id]['total'] = array(
-        '#markup' => commerce_currency_format($line_item->total[LANGUAGE_NONE][0]['amount'], $line_item->total[LANGUAGE_NONE][0]['currency_code'], $line_item),
+      $element['line_items'][$line_item_id]['commerce_total'] = array(
+        '#markup' => commerce_currency_format($line_item->commerce_total[LANGUAGE_NONE][0]['amount'], $line_item->commerce_total[LANGUAGE_NONE][0]['currency_code'], $line_item),
       );
     }
 
@@ -925,7 +927,7 @@ function commerce_line_item_field_widget_form(&$form, &$form_state, $field, $ins
  * Returns the line item manager element for display via AJAX.
  */
 function commerce_line_item_manager_refresh($form, $form_state) {
-  return $form['line_items'][$form['line_items']['#language']];
+  return $form['commerce_line_items'][$form['commerce_line_items']['#language']];
 }
 
 /**
@@ -944,8 +946,8 @@ function theme_commerce_line_item_manager($variables) {
       drupal_render($form['line_items'][$line_item_id]['title']),
       drupal_render($form['line_items'][$line_item_id]['line_item_label']),
       drupal_render($form['line_items'][$line_item_id]['quantity']),
-      drupal_render($form['line_items'][$line_item_id]['unit_price']),
-      drupal_render($form['line_items'][$line_item_id]['total']),
+      drupal_render($form['line_items'][$line_item_id]['commerce_unit_price']),
+      drupal_render($form['line_items'][$line_item_id]['commerce_total']),
     );
 
     $rows[] = $row;
@@ -998,13 +1000,13 @@ function commerce_line_item_manager_validate($element, &$form_state, $form) {
       }
 
       // Manually validate the unit price of each line item.
-      $unit_price = $form_state['values']['line_items'][$element['#language']]['line_items'][$line_item_id]['unit_price'];
+      $unit_price = $form_state['values']['commerce_line_items'][$element['#language']]['line_items'][$line_item_id]['commerce_unit_price'];
 
       if (is_numeric($unit_price[$element['#language']][0]['amount'])) {
-        $line_item->unit_price = $unit_price;
+        $line_item->commerce_unit_price = $unit_price;
       }
       else {
-        $name = implode('][', array_merge($element['line_items'][$line_item_id]['unit_price']['#parents'], array($element['#language'], 0, 'amount')));
+        $name = implode('][', array_merge($element['line_items'][$line_item_id]['commerce_unit_price']['#parents'], array($element['#language'], 0, 'amount')));
         form_set_error($name, 'You must enter a numeric value for the unit price.');
       }
 
@@ -1031,8 +1033,15 @@ function commerce_line_item_manager_validate($element, &$form_state, $form) {
       if ($parent == 'save_line_item') {
         $line_item_type = $element['actions']['line_item_type']['#value'];
 
+        // Extract an order ID from the form if present.
+        $order_id = 0;
+
+        if (!empty($form_state['commerce_order'])) {
+          $order_id = $form_state['commerce_order']->order_id;
+        }
+
         // Create the new line item.
-        $line_item = commerce_line_item_new($line_item_type->type);
+        $line_item = commerce_line_item_new($line_item_type->type, $order_id);
 
         // If this type specifies a valid add form callback function...
         if ($callback = commerce_line_item_type_callback($line_item_type, 'add_form_submit')) {
@@ -1079,6 +1088,31 @@ function commerce_line_item_field_widget_error($element, $error) {
 }
 
 /**
+ * Callback for getting line item properties.
+ *
+ * @see commerce_line_item_entity_property_info()
+ */
+function commerce_line_item_get_properties($line_item, array $options, $name) {
+  switch ($name) {
+    case 'order':
+      return $line_item->order_id;
+  }
+}
+
+/**
+ * Callback for setting line item properties.
+ *
+ * @see commerce_line_item_entity_property_info()
+ */
+function commerce_line_item_set_properties($line_item, $name, $value) {
+  switch ($name) {
+    case 'order':
+      $line_item->order_id = $value;
+      break;
+  }
+}
+
+/**
  * Callback to alter the property info of the reference field.
  *
  * @see commerce_line_item_field_info().
@@ -1101,7 +1135,7 @@ function commerce_line_item_reference_delete($entity_type, $entity, $field_name,
     // If its ID matches the specified line item...
     if ($line_item_wrapper->line_item_id->value() == $line_item_id) {
       // Unset it and return the updated order object.
-      $wrapper->line_items->offsetUnset($delta);
+      $wrapper->{$field_name}->offsetUnset($delta);
 
       return $wrapper->value();
     }
@@ -1184,16 +1218,16 @@ function commerce_line_items_total($value, $type = '', $language = '') {
     if (empty($type) || $line_item->type == $type) {
       // Set the initial currency code.
       if (empty($currency_code)) {
-        $currency_code = $line_item->total[$language][0]['currency_code'];
+        $currency_code = $line_item->commerce_total[$language][0]['currency_code'];
       }
       else {
         // Check to see if the line items or of a mixed currency.
-        if ($currency_code != $line_item->total[$language][0]['currency_code']) {
+        if ($currency_code != $line_item->commerce_total[$language][0]['currency_code']) {
           // TODO: Figure out what to do then!
         }
       }
 
-      $total += $line_item->total[$language][0]['amount'];
+      $total += $line_item->commerce_total[$language][0]['amount'];
     }
   }
 
@@ -1226,28 +1260,22 @@ function commerce_line_item_summary_links() {
 }
 
 /**
- * Implements hook_field_views_data_alter().
- *
- * This is a Views hook implemented to enable adding relationships for
- * referenced line items.
+ * Implements hook_field_views_data().
  */
-function commerce_line_item_field_views_data_alter(&$data, $field, $module) {
-  // If the field is a line item reference field...
-  if ($field['type'] == 'commerce_line_item_reference') {
-    $keys = array_keys($data);
-    $table = array_shift($keys);
+function commerce_line_item_field_views_data($field) {
+  $data = field_views_field_default_views_data($field);
 
-    // Add the relationship data to the proper line_item_id column.
-    foreach (array_keys($data[$table]) as $key) {
-      if (strpos($key, '_line_item_id') == strlen($key) - 13) {
-        // First indicate this field's table joins to the commerce_line_item table.
-        $data[$table]['table']['join']['commerce_line_item'] = array(
-          'left_field' => 'line_item_id',
-          'field' => $key,
-        );
+  // Build an array of bundles the field appears on.
+  $bundles = array();
 
-        // Then add the relationship data to the field itself.
-        $data[$table][$key]['relationship'] = array(
+  foreach ($field['bundles'] as $entity => $bundles) {
+    $bundles[] = $entity . ' (' . implode(', ', $bundles) . ')';
+  }
+
+  foreach ($data as $table_name => $table_data) {
+    foreach ($table_data as $field_name => $field_data) {
+      if (!in_array($field_name, array('table', 'entity_id', 'revision_id'))) {
+        $data[$table_name][$field_name]['relationship'] = array(
           'title' => t('Referenced line item'),
           'help' => t('The line item referenced through this field.'),
           'base' => 'commerce_line_item',
@@ -1258,4 +1286,6 @@ function commerce_line_item_field_views_data_alter(&$data, $field, $module) {
       }
     }
   }
+
+  return $data;
 }

@@ -18,13 +18,16 @@ function commerce_payment_pane_checkout_form($form, &$form_state, $checkout_pane
   $order->payment_methods = array();
   rules_invoke_all('commerce_payment_methods', $order);
 
+  // Sort the payment methods array by the enabling Rules' weight values.
+  uasort($order->payment_methods, 'drupal_sort_weight');
+
   // Generate an array of payment method options for the checkout form.
   $options = array();
 
-  foreach ((array) $order->payment_methods as $instance_id => $method_info) {
+  foreach ($order->payment_methods as $instance_id => $method_info) {
     // Ensure we've received a valid payment method.
     if ($payment_method = commerce_payment_method_load($method_info['method_id'])) {
-      $options[$instance_id] = $payment_method->display_title;
+      $options[$instance_id] = $payment_method['display_title'];
     }
   }
 
@@ -53,7 +56,7 @@ function commerce_payment_pane_checkout_form($form, &$form_state, $checkout_pane
 
     // Find the default payment method using either the preselected value stored
     // in the order / checkout pane or the first available method.
-    $pane_values = !empty($form_state['values']) ? $form_state['values'][$checkout_pane->pane_id] : array();
+    $pane_values = !empty($form_state['values']) ? $form_state['values'][$checkout_pane['pane_id']] : array();
 
     if (isset($pane_values['payment_method']) && isset($options[$pane_values['payment_method']])) {
       $default_value = $pane_values['payment_method'];
@@ -72,7 +75,7 @@ function commerce_payment_pane_checkout_form($form, &$form_state, $checkout_pane
     // Add the payment method specific form elements.
     $method_info = $order->payment_methods[$pane_form['payment_method']['#default_value']];
     $payment_method = commerce_payment_method_load($method_info['method_id']);
-    $payment_method->settings = $method_info['settings'];
+    $payment_method['settings'] = $method_info['settings'];
 
     if ($callback = commerce_payment_method_callback($payment_method, 'submit_form')) {
       $pane_form['payment_details'] = $callback($payment_method, $pane_values, $checkout_pane, $order);
@@ -99,8 +102,8 @@ function commerce_payment_pane_checkout_form_details_refresh($form, $form_state)
  * Payment pane: validation callback.
  */
 function commerce_payment_pane_checkout_form_validate($form, &$form_state, $checkout_pane, $order) {
-  $pane_form = $form[$checkout_pane->pane_id];
-  $pane_values = $form_state['values'][$checkout_pane->pane_id];
+  $pane_form = $form[$checkout_pane['pane_id']];
+  $pane_values = $form_state['values'][$checkout_pane['pane_id']];
 
   // Only attempt validation if there were payment methods available.
   if ($pane_values['payment_methods']) {
@@ -120,7 +123,7 @@ function commerce_payment_pane_checkout_form_validate($form, &$form_state, $chec
     $payment_method = commerce_payment_method_instance_load($pane_values['payment_method']);
 
     if ($callback = commerce_payment_method_callback($payment_method, 'submit_form_validate')) {
-      $result = $callback($payment_method, $pane_form['payment_details'], $pane_values['payment_details'], $order, array($checkout_pane->pane_id, 'payment_details'));
+      $result = $callback($payment_method, $pane_form['payment_details'], $pane_values['payment_details'], $order, array($checkout_pane['pane_id'], 'payment_details'));
 
       // To prevent payment method validation routines from having to return TRUE
       // explicitly, only return FALSE if it was specifically returned.  Otherwise
@@ -137,8 +140,8 @@ function commerce_payment_pane_checkout_form_validate($form, &$form_state, $chec
  * Payment pane: submit callback.
  */
 function commerce_payment_pane_checkout_form_submit($form, &$form_state, $checkout_pane, $order) {
-  $pane_form = $form[$checkout_pane->pane_id];
-  $pane_values = $form_state['values'][$checkout_pane->pane_id];
+  $pane_form = $form[$checkout_pane['pane_id']];
+  $pane_values = $form_state['values'][$checkout_pane['pane_id']];
 
   // Only process if there were payment methods available.
   if ($pane_values['payment_methods']) {
@@ -172,7 +175,7 @@ function commerce_payment_redirect_pane_checkout_form(&$form, &$form_state, $che
   }
 
   // If the payment method doesn't exist or does not require a redirect...
-  if (!$payment_method || !$payment_method->offsite) {
+  if (!$payment_method || !$payment_method['offsite']) {
     // Advance the customer to the next step of the checkout process.
     _commerce_payment_redirect_pane_next_page($form, $form_state, $order);
   }
@@ -221,7 +224,7 @@ function commerce_payment_redirect_pane_checkout_form(&$form, &$form_state, $che
   }
   else {
     // Alert the administrator that the module does not provide a required form.
-    drupal_set_message(t('The %title payment method indicates it is offsite but does not define the necessary form to process the redirect.', array('%title' => $payment_method->title)), 'error');
+    drupal_set_message(t('The %title payment method indicates it is offsite but does not define the necessary form to process the redirect.', array('%title' => $payment_method['title'])), 'error');
   }
 }
 
@@ -270,7 +273,7 @@ function commerce_payment_post_redirect_form($action, array $values = array()) {
  * Moves an order ahead to the next page via an order update and redirect.
  */
 function _commerce_payment_redirect_pane_next_page($form, &$form_state, $order) {
-  $next_page = $form_state['checkout_page']->next_page;
+  $next_page = $form_state['checkout_page']['next_page'];
 
   $order = commerce_order_status_update($order, 'checkout_' . $next_page);
 
@@ -286,7 +289,7 @@ function _commerce_payment_redirect_pane_next_page($form, &$form_state, $order) 
  * Moves an order back to the previous page via an order update and redirect.
  */
 function _commerce_payment_redirect_pane_prev_page($form, &$form_state, $order) {
-  $prev_page = $form_state['checkout_page']->prev_page;
+  $prev_page = $form_state['checkout_page']['prev_page'];
 
   $order = commerce_order_status_update($order, 'checkout_' . $prev_page);
 

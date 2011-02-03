@@ -33,25 +33,17 @@ function commerce_checkout_menu() {
 
   $items['admin/commerce/config/checkout'] = array(
     'title' => 'Checkout settings',
-    'description' => 'Configure checkout settings and customize the checkout form.',
+    'description' => 'Customize the checkout form and configure checkout rules.',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('commerce_checkout_settings_form'),
+    'page arguments' => array('commerce_checkout_builder_form'),
     'access arguments' => array('administer checkout'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'includes/commerce_checkout.admin.inc',
   );
-  $items['admin/commerce/config/checkout/settings'] = array(
-    'title' => 'Settings',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'weight' => -10,
-  );
   $items['admin/commerce/config/checkout/form'] = array(
     'title' => 'Checkout form',
     'description' => 'Build your checkout pages using module defined checkout form elements.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('commerce_checkout_builder_form'),
-    'access arguments' => array('administer checkout'),
-    'type' => MENU_LOCAL_TASK,
+    'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 0,
     'file' => 'includes/commerce_checkout.admin.inc',
   );
@@ -117,7 +109,8 @@ function commerce_checkout_permission() {
  */
 function commerce_checkout_help($path, $arg) {
   switch ($path) {
-    case 'admin/commerce/config/checkout-builder':
+    case 'admin/commerce/config/checkout':
+    case 'admin/commerce/config/checkout/form':
       return t('Use the table below to build your checkout form using the available checkout panes defined by modules enabled on your site. You may configure the checkout pane settings using the operations links below. You may also add additional pages to the checkout process using the tab above and edit them using the operations links below.');
 
     case 'admin/commerce/config/checkout/rules':
@@ -139,6 +132,36 @@ function commerce_checkout_theme() {
       'file' => 'includes/commerce_checkout.pages.inc',
     ),
   );
+}
+
+/**
+ * Implements hook_entity_property_info_alter().
+ *
+ * Currently the Entity module does not add query callbacks for various core
+ * entity properties. Checkout depends on being able to load a user account by
+ * e-mail address, so we must alter in the callback until Entity is updated.
+ *
+ * @see http://drupal.org/node/1044312
+ */
+function commerce_checkout_entity_property_info_alter(&$info) {
+  // TODO: Switch to using entity_metadata_table_query() when
+  // http://drupal.org/node/1041240 is fixed.
+  $info['user']['properties']['mail']['query callback'] = 'commerce_checkout_entity_metadata_table_query';
+}
+
+/**
+ * Entity callback: queries the database for an entity by a given property.
+ */
+function commerce_checkout_entity_metadata_table_query($entity_type, $property, $value, $limit) {
+  $query = new EntityFieldQuery();
+
+  $query->entityCondition('entity_type', $entity_type, '=')
+        ->propertyCondition($property, $value, '=')
+        ->range(0, $limit);
+
+  $result = $query->execute();
+
+  return !empty($result[$entity_type]) ? array_keys($result[$entity_type]) : array();
 }
 
 /**
@@ -206,7 +229,7 @@ function commerce_checkout_form_commerce_checkout_add_complete_rule_form_alter(&
 function commerce_checkout_commerce_order_state_info() {
   $order_states = array();
 
-  $order_states['checkout'] = (object) array(
+  $order_states['checkout'] = array(
     'name' => 'checkout',
     'title' => t('Checkout'),
     'description' => t('Orders in this state have begun but not completed the checkout process.'),
@@ -225,13 +248,13 @@ function commerce_checkout_commerce_order_status_info() {
 
   // Create an order status to correspond with every checkout page.
   foreach (commerce_checkout_pages() as $page_id => $checkout_page) {
-    $order_statuses['checkout_' . $page_id] = (object) array(
+    $order_statuses['checkout_' . $page_id] = array(
       'name' => 'checkout_' . $page_id,
-      'title' => t('Checkout: @page', array('@page' => $checkout_page->name)),
+      'title' => t('Checkout: @page', array('@page' => $checkout_page['name'])),
       'state' => 'checkout',
       'checkout_page' => $page_id,
-      'cart' => $checkout_page->status_cart,
-      'weight' => $checkout_page->weight,
+      'cart' => $checkout_page['status_cart'],
+      'weight' => $checkout_page['weight'],
     );
   }
 
@@ -255,13 +278,13 @@ function commerce_checkout_commerce_checkout_page_info() {
   $checkout_pages = array();
 
   // Define a primary checkout page as the first step.
-  $checkout_pages['checkout'] = (object) array(
+  $checkout_pages['checkout'] = array(
     'title' => t('Checkout'),
     'weight' => 0,
   );
 
   // Define a page for reviewing the data entered during checkout.
-  $checkout_pages['review'] = (object) array(
+  $checkout_pages['review'] = array(
     'name' => t('Review'),
     'title' => t('Review order'),
     'help' => t('Review your order before continuing.'),
@@ -269,7 +292,7 @@ function commerce_checkout_commerce_checkout_page_info() {
   );
 
   // Define a page for checkout completion with no submit buttons on it.
-  $checkout_pages['complete'] = (object) array(
+  $checkout_pages['complete'] = array(
     'name' => t('Complete'),
     'title' => t('Checkout complete'),
     'weight' => 50,
@@ -286,14 +309,14 @@ function commerce_checkout_commerce_checkout_page_info() {
 function commerce_checkout_commerce_checkout_pane_info() {
   $checkout_panes = array();
 
-  $checkout_panes['checkout_review'] = (object) array(
+  $checkout_panes['checkout_review'] = array(
     'title' => t('Review'),
     'file' => 'includes/commerce_checkout.checkout_pane.inc',
     'base' => 'commerce_checkout_review_pane',
     'page' => 'review',
   );
 
-  $checkout_panes['checkout_completion_message'] = (object) array(
+  $checkout_panes['checkout_completion_message'] = array(
     'title' => t('Completion message'),
     'file' => 'includes/commerce_checkout.checkout_pane.inc',
     'base' => 'commerce_checkout_completion_message_pane',
@@ -321,7 +344,7 @@ function commerce_checkout_pages() {
     foreach ($checkout_pages as $page_id => $checkout_page) {
       $defaults = array(
         'page_id' => $page_id,
-        'name' => $checkout_page->title,
+        'name' => $checkout_page['title'],
         'title' => '',
         'help' => '',
         'status_cart' => TRUE,
@@ -332,35 +355,34 @@ function commerce_checkout_pages() {
         'next_page' => NULL,
       );
 
-      $checkout_pages[$page_id] = (object) ((array) $checkout_page + $defaults);
+      $checkout_pages[$page_id] += $defaults;
 
       // Set a weight that preserves the order of 0 weighted pages.
-      if (empty($checkout_page->weight)) {
-        $checkout_pages[$page_id]->weight = $count++ / count($checkout_pages);
+      if (empty($checkout_page['weight'])) {
+        $checkout_pages[$page_id]['weight'] = $count++ / count($checkout_pages);
       }
     }
 
-    uasort($checkout_pages, 'commerce_sort_weight');
+    uasort($checkout_pages, 'drupal_sort_weight');
 
     // Initialize the previous and next pages.
-    $previous_page = NULL;
-    $checkout_page = NULL;
+    $previous_page_id = NULL;
 
-    foreach ($checkout_pages as $checkout_page) {
+    foreach ($checkout_pages as &$checkout_page) {
       // Look for any checkout panes assigned to this page.
-      $checkout_panes = commerce_checkout_panes(array('page' => $checkout_page->page_id));
+      $checkout_panes = commerce_checkout_panes(array('page' => $checkout_page['page_id']));
 
       // If this is the completion page or at least one pane was found...
-      if ($checkout_page->page_id == 'complete' || !empty($checkout_panes)) {
+      if ($checkout_page['page_id'] == 'complete' || !empty($checkout_panes)) {
         // If a page has been stored as the previous page...
-        if ($previous_page) {
+        if ($previous_page_id) {
           // Set the current page's previous page and the previous page's next.
-          $checkout_page->prev_page = $previous_page->page_id;
-          $previous_page->next_page = $checkout_page->page_id;
+          $checkout_page['prev_page'] = $previous_page_id;
+          $checkout_pages[$previous_page_id]['next_page'] = $checkout_page['page_id'];
         }
 
         // Set the current page as the previous page for the next iteration.
-        $previous_page = $checkout_page;
+        $previous_page_id = $checkout_page['page_id'];
       }
     }
   }
@@ -405,15 +427,15 @@ function commerce_checkout_panes($conditions = array()) {
 
   // Cache the saved checkout pane data if it hasn't been loaded yet.
   if (!isset($checkout_panes)) {
-    $saved_panes = db_query('SELECT * FROM {commerce_checkout_pane}')->fetchAllAssoc('pane_id');
+    $saved_panes = db_query('SELECT * FROM {commerce_checkout_pane}')->fetchAllAssoc('pane_id', PDO::FETCH_ASSOC);
 
     // Load panes defined by modules.
     $checkout_panes = array();
 
     foreach (module_implements('commerce_checkout_pane_info') as $module) {
       foreach (module_invoke($module, 'commerce_checkout_pane_info') as $pane_id => $checkout_pane) {
-        $checkout_pane->pane_id = $pane_id;
-        $checkout_pane->module = $module;
+        $checkout_pane['pane_id'] = $pane_id;
+        $checkout_pane['module'] = $module;
         $checkout_panes[$pane_id] = $checkout_pane;
       }
     }
@@ -424,14 +446,14 @@ function commerce_checkout_panes($conditions = array()) {
     foreach ($checkout_panes as $pane_id => $checkout_pane) {
       // Update the pane with saved data.
       if (!empty($saved_panes[$pane_id])) {
-        $checkout_pane = (object) array_merge((array) $checkout_pane + (array) $saved_panes[$pane_id]);
-        $checkout_pane->saved = TRUE;
+        $checkout_pane = array_merge($checkout_pane, $saved_panes[$pane_id]);
+        $checkout_pane['saved'] = TRUE;
       }
 
       // Set some defaults for the checkout pane.
       $defaults = array(
         'base' => $pane_id,
-        'name' => $checkout_pane->title,
+        'name' => $checkout_pane['title'],
         'page' => 'checkout',
         'collapsible' => FALSE,
         'collapsed' => FALSE,
@@ -440,12 +462,12 @@ function commerce_checkout_panes($conditions = array()) {
         'review' => TRUE,
         'callbacks' => array(),
       );
-      $checkout_pane = (object) array_merge($defaults, (array) $checkout_pane);
+      $checkout_pane += $defaults;
 
       // Merge in default callbacks.
       foreach (array('settings_form', 'checkout_form', 'checkout_form_validate', 'checkout_form_submit', 'review') as $callback) {
-        if (!isset($checkout_pane->callbacks[$callback])) {
-          $checkout_pane->callbacks[$callback] = $checkout_pane->base . '_' . $callback;
+        if (!isset($checkout_pane['callbacks'][$callback])) {
+          $checkout_pane['callbacks'][$callback] = $checkout_pane['base'] . '_' . $callback;
         }
       }
 
@@ -453,7 +475,7 @@ function commerce_checkout_panes($conditions = array()) {
     }
 
     // Sort the panes by their weight value.
-    uasort($checkout_panes, 'commerce_sort_weight');
+    uasort($checkout_panes, 'drupal_sort_weight');
   }
 
   // Apply conditions to the returned panes if specified.
@@ -468,7 +490,7 @@ function commerce_checkout_panes($conditions = array()) {
       foreach ($conditions as $property => $value) {
         // If the current value for the specified property on the pane does not
         // match the filter value...
-        if ($checkout_pane->{$property} != $value) {
+        if ($checkout_pane[$property] != $value) {
           // Do not add it to the temporary array.
           $valid = FALSE;
         }
@@ -497,7 +519,7 @@ function commerce_checkout_panes($conditions = array()) {
  *     the type of query performed to save the checkout pane.
  */
 function commerce_checkout_pane_save($checkout_pane) {
-  return drupal_write_record('commerce_checkout_pane', $checkout_pane, !empty($checkout_pane->saved) ? 'pane_id' : array());
+  return drupal_write_record('commerce_checkout_pane', $checkout_pane, !empty($checkout_pane['saved']) ? 'pane_id' : array());
 }
 
 /**
@@ -507,7 +529,7 @@ function commerce_checkout_pane_save($checkout_pane) {
  *   The machine readable ID of the checkout pane.
  *
  * @return
- *   The requested checkout pane object or FALSE if not found.
+ *   The requested checkout pane array or FALSE if not found.
  */
 function commerce_checkout_pane_load($pane_id) {
   // Loads the entire list of panes.
@@ -528,7 +550,7 @@ function commerce_checkout_pane_load($pane_id) {
  *   The checkout pane object represented on the settings form.
  */
 function commerce_checkout_pane_settings_title($checkout_pane) {
-  return t("'@pane' checkout pane", array('@pane' => $checkout_pane->name));
+  return t("'@pane' checkout pane", array('@pane' => $checkout_pane['name']));
 }
 
 /**
@@ -545,7 +567,7 @@ function commerce_checkout_pane_reset($pane_id) {
  *   loading the checkout pane include file if specified.
  *
  * @param $checkout_pane
- *   The checkout pane object.
+ *   The checkout pane array.
  * @param $callback
  *   The callback function to return, one of:
  *   - settings_form
@@ -560,15 +582,15 @@ function commerce_checkout_pane_reset($pane_id) {
  */
 function commerce_checkout_pane_callback($checkout_pane, $callback) {
   // Include the checkout pane file if specified.
-  if (!empty($checkout_pane->file)) {
-    $parts = explode('.', $checkout_pane->file);
-    module_load_include(array_pop($parts), $checkout_pane->module, implode('.', $parts));
+  if (!empty($checkout_pane['file'])) {
+    $parts = explode('.', $checkout_pane['file']);
+    module_load_include(array_pop($parts), $checkout_pane['module'], implode('.', $parts));
   }
 
   // If the specified callback function exists, return it.
-  if (!empty($checkout_pane->callbacks[$callback]) &&
-      function_exists($checkout_pane->callbacks[$callback])) {
-    return $checkout_pane->callbacks[$callback];
+  if (!empty($checkout_pane['callbacks'][$callback]) &&
+      function_exists($checkout_pane['callbacks'][$callback])) {
+    return $checkout_pane['callbacks'][$callback];
   }
 
   // Otherwise return FALSE.
@@ -623,12 +645,12 @@ function commerce_checkout_access($order, $checkout_page, $account = NULL) {
 
   // If the order is not in a checkout status, return FALSE for any page but the
   // completion page unless the order is still a shopping cart.
-  if ($order_status->state != 'checkout' && $checkout_page->page_id != 'complete') {
-    if ($order_status->state == 'cart') {
+  if ($order_status['state'] != 'checkout' && $checkout_page['page_id'] != 'complete') {
+    if ($order_status['state'] == 'cart') {
       $checkout_pages = commerce_checkout_pages();
       $first_page = key($checkout_pages);
 
-      if ($checkout_page->page_id != $first_page) {
+      if ($checkout_page['page_id'] != $first_page) {
         return FALSE;
       }
     }
@@ -639,23 +661,23 @@ function commerce_checkout_access($order, $checkout_page, $account = NULL) {
 
   // If the order is still in checkout, only allow access to pages that it is
   // currently on or has previously completed.
-  if ($order_status->state == 'checkout') {
-    $status_checkout_page = commerce_checkout_page_load($order_status->checkout_page);
+  if ($order_status['state'] == 'checkout') {
+    $status_checkout_page = commerce_checkout_page_load($order_status['checkout_page']);
 
     // However, if buttons aren't present on the status's checkout page, don't
     //  allow access unless the order status matches the page.
-    if (!$status_checkout_page->buttons && $status_checkout_page->page_id != $checkout_page->page_id) {
+    if (!$status_checkout_page['buttons'] && $status_checkout_page['page_id'] != $checkout_page['page_id']) {
       // The exception here for the checkout completion page allows customers to
       // access this page for any order status the order might be moved to when
       // the order is completed.
-      if ($checkout_page->page_id != 'complete') {
+      if ($checkout_page['page_id'] != 'complete') {
         return FALSE;
       }
     }
     else {
       // Compare the weights of the currently requested page against the weight
       // of the order status's page and return FALSE if it's greater.
-      if ($checkout_page->weight > $status_checkout_page->weight) {
+      if ($checkout_page['weight'] > $status_checkout_page['weight']) {
         return FALSE;
       }
     }
@@ -665,9 +687,9 @@ function commerce_checkout_access($order, $checkout_page, $account = NULL) {
   // status.  We then handled cases where the user is trying to access any
   // checkout page for orders in a checkout status.  We now turn to cases where
   // the user is accessing the complete page for any other order state.
-  elseif ($checkout_page->page_id == 'complete') {
+  elseif ($checkout_page['page_id'] == 'complete') {
     // Don't allow completion page access for orders in the cart or canceled states.
-    if (in_array($order_status->state, array('canceled', 'cart'))) {
+    if (in_array($order_status['state'], array('canceled', 'cart'))) {
       return FALSE;
     }
   }

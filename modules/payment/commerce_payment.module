@@ -88,7 +88,7 @@ function commerce_payment_entity_info() {
 
   foreach (commerce_payment_methods() as $method_id => $payment_method) {
     $return['commerce_payment_transaction']['bundles'][$method_id] = array(
-      'label' => $payment_method->title,
+      'label' => $payment_method['title'],
     );
   }
 
@@ -163,7 +163,7 @@ function template_preprocess_commerce_payment_totals(&$variables) {
 function commerce_payment_commerce_checkout_page_info() {
   $checkout_pages = array();
 
-  $checkout_pages['payment'] = (object) array(
+  $checkout_pages['payment'] = array(
     'title' => t('Payment'),
     'help' => t('Use the button below to proceed to the payment server.'),
     'status_cart' => FALSE,
@@ -181,7 +181,7 @@ function commerce_payment_commerce_checkout_page_info() {
 function commerce_payment_commerce_checkout_pane_info() {
   $checkout_panes = array();
 
-  $checkout_panes['commerce_payment'] = (object) array(
+  $checkout_panes['commerce_payment'] = array(
     'title' => t('Payment'),
     'page' => 'review',
     'locked' => TRUE,
@@ -190,7 +190,7 @@ function commerce_payment_commerce_checkout_pane_info() {
     'weight' => 10,
   );
 
-  $checkout_panes['commerce_payment_redirect'] = (object) array(
+  $checkout_panes['commerce_payment_redirect'] = array(
     'title' => t('Off-site payment redirect'),
     'page' => 'payment',
     'locked' => TRUE,
@@ -304,14 +304,14 @@ function commerce_payment_methods() {
         'callbacks' => array(),
       );
 
-      $payment_method = (object) ((array) $payment_method + $defaults);
+      $payment_method += $defaults;
 
       // Default the display title to the title if necessary.  The display title
       // is used in instances where the payment method has an official name used
       // as the title (i.e. PayPal WPS) but a different method of display on
       // selection forms (like some text and a set of images).
-      if (empty($payment_method->display_title)) {
-        $payment_method->display_title = $payment_method->title;
+      if (empty($payment_method['display_title'])) {
+        $payment_method['display_title'] = $payment_method['title'];
       }
 
       // Default the short title to the title if necessary.  Like the display
@@ -320,14 +320,14 @@ function commerce_payment_methods() {
       // stripped off.  The payment method title might be PayPal WPS as it
       // distinguishes itself from other PayPal payment services, but you would
       // only want to display PayPal to the customer as their means of payment.
-      if (empty($payment_methods[$method_id]->short_title)) {
-        $payment_method->short_title = $payment_method->title;
+      if (empty($payment_methods[$method_id]['short_title'])) {
+        $payment_method['short_title'] = $payment_method['title'];
       }
 
       // Merge in default callbacks.
       foreach (array('settings_form', 'submit_form', 'submit_form_validate', 'submit_form_submit', 'redirect_form', 'redirect_form_validate', 'redirect_form_submit') as $callback) {
-        if (!isset($payment_method->callbacks[$callback])) {
-          $payment_method->callbacks[$callback] = $payment_method->base . '_' . $callback;
+        if (!isset($payment_method['callbacks'][$callback])) {
+          $payment_method['callbacks'][$callback] = $payment_method['base'] . '_' . $callback;
         }
       }
     }
@@ -337,7 +337,7 @@ function commerce_payment_methods() {
 }
 
 /**
- * Returns a payment method object.
+ * Returns a payment method array.
  *
  * @param $method_id
  *   The ID of the payment method to return.
@@ -370,7 +370,7 @@ function commerce_payment_method_get_title($title = 'title', $method = NULL) {
   // Return a method title if specified and it exists.
   if (!empty($method)) {
     if (isset($payment_methods[$method])) {
-      return $payment_methods[$method]->{$title};
+      return $payment_methods[$method][$title];
     }
     else {
       // Return FALSE if it does not exist.
@@ -380,7 +380,7 @@ function commerce_payment_method_get_title($title = 'title', $method = NULL) {
 
   // Otherwise turn the array values into the specified title only.
   foreach ($payment_methods as $key => $value) {
-    $payment_methods[$key] = $value->{$title};
+    $payment_methods[$key] = $value[$title];
   }
 
   return $payment_methods;
@@ -414,9 +414,9 @@ function commerce_payment_method_options_list() {
  */
 function commerce_payment_method_callback($payment_method, $callback) {
   // If the specified callback function exists, return it.
-  if (!empty($payment_method->callbacks[$callback]) &&
-      function_exists($payment_method->callbacks[$callback])) {
-    return $payment_method->callbacks[$callback];
+  if (!empty($payment_method['callbacks'][$callback]) &&
+      function_exists($payment_method['callbacks'][$callback])) {
+    return $payment_method['callbacks'][$callback];
   }
 
   // Otherwise return FALSE.
@@ -468,19 +468,19 @@ function commerce_payment_method_instance_load($instance_id) {
 
   // First load the payment method and add the instance ID.
   $payment_method = commerce_payment_method_load($method_id);
-  $payment_method->instance_id = $instance_id;
+  $payment_method['instance_id'] = $instance_id;
 
   // Then load the Rule configuration that enables the method.
   $rule = rules_config_load($rule_name);
 
   // Iterate over its actions to find one with the matching element ID and pull
   // its settings into the payment method object.
-  $payment_method->settings = array();
+  $payment_method['settings'] = array();
 
   foreach ($rule->actions() as $action) {
     if ($action->getElementName() == 'commerce_payment_enable_' . $method_id) {
       if (is_array($action->settings['payment_method']) && !empty($action->settings['payment_method']['settings'])) {
-        $payment_method->settings = $action->settings['payment_method']['settings'];
+        $payment_method['settings'] = $action->settings['payment_method']['settings'];
       }
     }
   }
@@ -507,19 +507,19 @@ function commerce_payment_transaction_statuses() {
     $transaction_statuses = module_invoke_all('commerce_payment_transaction_status_info');
 
     $transaction_statuses += array(
-      COMMERCE_PAYMENT_STATUS_PENDING => (object) array(
+      COMMERCE_PAYMENT_STATUS_PENDING => array(
         'status' => COMMERCE_PAYMENT_STATUS_PENDING,
         'title' => t('Pending'),
         'icon' => drupal_get_path('module', 'commerce_payment') . '/theme/icon-pending.png',
         'total' => FALSE,
       ),
-      COMMERCE_PAYMENT_STATUS_SUCCESS => (object) array(
+      COMMERCE_PAYMENT_STATUS_SUCCESS => array(
         'status' => COMMERCE_PAYMENT_STATUS_SUCCESS,
         'title' => t('Success'),
         'icon' => drupal_get_path('module', 'commerce_payment') . '/theme/icon-success.png',
         'total' => TRUE,
       ),
-      COMMERCE_PAYMENT_STATUS_FAILURE => (object) array(
+      COMMERCE_PAYMENT_STATUS_FAILURE => array(
         'status' => COMMERCE_PAYMENT_STATUS_FAILURE,
         'title' => t('Failure'),
         'icon' => drupal_get_path('module', 'commerce_payment') . '/theme/icon-failure.png',
@@ -537,7 +537,7 @@ function commerce_payment_transaction_statuses() {
 function theme_commerce_payment_transaction_status_icon($variables) {
   $transaction_status = $variables['transaction_status'];
 
-  return '<img src="' . url($transaction_status->icon, array('absolute' => TRUE)) . '" class="' . drupal_html_class($transaction_status->status) . '" title="' . $transaction_status->title . '" alt="' . $transaction_status->title . '" />';
+  return '<img src="' . url($transaction_status['icon'], array('absolute' => TRUE)) . '" class="' . drupal_html_class($transaction_status['status']) . '" title="' . $transaction_status['title'] . '" alt="' . $transaction_status['title'] . '" />';
 }
 
 /**
@@ -546,7 +546,7 @@ function theme_commerce_payment_transaction_status_icon($variables) {
 function theme_commerce_payment_transaction_status_text($variables) {
   $transaction_status = $variables['transaction_status'];
 
-  return '<span class="' . drupal_html_class($transaction_status->status) . '">' . $variables['text'] . '</span>';
+  return '<span class="' . drupal_html_class($transaction_status['status']) . '">' . $variables['text'] . '</span>';
 }
 
 /**
@@ -680,12 +680,12 @@ function commerce_payment_transaction_build_content($order, $transaction, $view_
 
   // Add the default fields inherent to the transaction entity.
   if (!empty($transaction->instance_id) && $payment_method = commerce_payment_method_instance_load($transaction->instance_id)) {
-    list($method_id, $rule_name) = explode('|', $payment_method->instance_id);
-    $title = l(check_plain($payment_method->title), 'admin/config/workflow/rules/config/' . $rule_name);
+    list($method_id, $rule_name) = explode('|', $payment_method['instance_id']);
+    $title = l(check_plain($payment_method['title']), 'admin/config/workflow/rules/config/' . $rule_name);
   }
   else {
     $payment_method = commerce_payment_method_load($transaction->payment_method);
-    $title = check_plain($payment_method->title);
+    $title = check_plain($payment_method['title']);
   }
 
   $transaction_statuses = commerce_payment_transaction_statuses();
@@ -697,7 +697,7 @@ function commerce_payment_transaction_build_content($order, $transaction, $view_
     array(t('Remote ID'), check_plain($transaction->remote_id)),
     array(t('Message'), t($transaction->message, $transaction->message_variables)),
     array(t('Amount'), commerce_currency_format($transaction->amount, $transaction->currency_code)),
-    array(t('Status'), check_plain($transaction_statuses[$transaction->status]->title)),
+    array(t('Status'), check_plain($transaction_statuses[$transaction->status]['title'])),
     array(t('Remote status'), check_plain($transaction->remote_status)),
     array(t('Created'), format_date($transaction->created)),
   );
@@ -836,7 +836,7 @@ function commerce_payment_transaction_access($op, $order, $transaction = NULL, $
  *     of the order or FALSE if it is impossible to calculate.
  */
 function commerce_payment_order_balance($order, $totals = array()) {
-  $order_total = commerce_line_items_total($order->line_items);
+  $order_total = commerce_line_items_total($order->commerce_line_items);
 
   // Calculate the transaction totals if not supplied.
   if (empty($totals)) {
@@ -845,7 +845,7 @@ function commerce_payment_order_balance($order, $totals = array()) {
     foreach (commerce_payment_transaction_load_multiple(array(), array('order_id' => $order->order_id)) as $transaction) {
       // If the payment transaction status indicates it should include the
       // current transaction in the total...
-      if ($transaction_statuses[$transaction->status]->total) {
+      if ($transaction_statuses[$transaction->status]['total']) {
         // Add the transaction to its currency's running total if it exists...
         if (isset($totals[$transaction->currency_code])) {
           $totals[$transaction->currency_code] += $transaction->amount;
@@ -906,6 +906,13 @@ function commerce_payment_transaction_get_properties($transaction, array $option
       return $transaction->uid;
     case 'order':
       return $transaction->order_id;
+    case 'message':
+      if ($transaction->message) {
+        return t($transaction->message, is_array($transaction->message_variables) ? $transaction->message_variables : array());
+      }
+      else {
+        return '';
+      }
   }
 }
 

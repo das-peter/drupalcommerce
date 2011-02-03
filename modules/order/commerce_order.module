@@ -97,9 +97,29 @@ function commerce_order_permission() {
       'title' => t('Edit own orders'),
       'restrict access' => TRUE,
     ),
+    'view own orders' => array(
+      'title' => t('View own orders'),
+    ),
   );
 
   return $permissions;
+}
+
+/**
+ * Implements hook_commerce_checkout_pane_info().
+ */
+function commerce_order_commerce_checkout_pane_info() {
+  $checkout_panes = array();
+
+  $checkout_panes['account'] = array(
+    'title' => t('Account information'),
+    'file' => 'includes/commerce_order.checkout_pane.inc',
+    'base' => 'commerce_order_account_pane',
+    'page' => 'checkout',
+    'weight' => -5,
+  );
+
+  return $checkout_panes;
 }
 
 /**
@@ -108,21 +128,21 @@ function commerce_order_permission() {
 function commerce_order_commerce_order_state_info() {
   $order_states = array();
 
-  $order_states['canceled'] = (object) array(
+  $order_states['canceled'] = array(
     'name' => 'canceled',
     'title' => t('Canceled'),
     'description' => t('Orders in this state have been canceled through some user action.'),
     'weight' => -10,
     'default_status' => 'canceled',
   );
-  $order_states['pending'] = (object) array(
+  $order_states['pending'] = array(
     'name' => 'pending',
     'title' => t('Pending'),
     'description' => t('Orders in this state have been created and are awaiting further action.'),
     'weight' => 0,
     'default_status' => 'pending',
   );
-  $order_states['completed'] = (object) array(
+  $order_states['completed'] = array(
     'name' => 'complete',
     'title' => t('Completed'),
     'description' => t('Orders in this state have been completed as far as the customer is concerned.'),
@@ -139,25 +159,25 @@ function commerce_order_commerce_order_state_info() {
 function commerce_order_commerce_order_status_info() {
   $order_statuses = array();
 
-  $order_statuses['canceled'] = (object) array(
+  $order_statuses['canceled'] = array(
     'name' => 'canceled',
     'title' => t('Canceled'),
     'state' => 'canceled',
   );
 
-  $order_statuses['pending'] = (object) array(
+  $order_statuses['pending'] = array(
     'name' => 'pending',
     'title' => t('Pending'),
     'state' => 'pending',
   );
-  $order_statuses['processing'] = (object) array(
+  $order_statuses['processing'] = array(
     'name' => 'processing',
     'title' => t('Processing'),
     'state' => 'pending',
     'weight' => 5,
   );
 
-  $order_statuses['completed'] = (object) array(
+  $order_statuses['completed'] = array(
     'name' => 'completed',
     'title' => t('Completed'),
     'state' => 'completed',
@@ -207,6 +227,13 @@ function commerce_order_type_get_name($type = NULL) {
 }
 
 /**
+ * Wraps commerce_order_type_get_name() for the Entity module.
+ */
+function commerce_order_type_options_list() {
+  return commerce_order_type_get_name();
+}
+
+/**
  * Returns an initialized order object.
  *
  * @param $uid
@@ -223,7 +250,7 @@ function commerce_order_new($uid = 0, $status = '', $type = 'commerce_order') {
   // If no status was specified, use the default Pending status.
   if (empty($status)) {
     $order_state = commerce_order_state_load('pending');
-    $status = $order_state->default_status;
+    $status = $order_state['default_status'];
   }
 
   return entity_get_controller('commerce_order')->create($uid, $status, $type);
@@ -377,12 +404,20 @@ function commerce_order_access($op, $order = NULL, $account = NULL) {
   global $user;
   $account = isset($account) ? $account : $user;
 
+  // Grant access to any operation for any order for administrators.
   if (user_access('administer orders', $account)) {
     return TRUE;
   }
 
-  if ($op == 'view' && user_access('access orders', $account)) {
-    return TRUE;
+  // Grant view access to users with the administrative access orders permission
+  // or to a user's own orders with the view own orders permission.
+  if ($op == 'view') {
+    if (user_access('access orders', $account)) {
+      return TRUE;
+    }
+    elseif (user_access('view own orders', $account) && $order->uid == $account->uid) {
+      return TRUE;
+    }
   }
 
   if ($op == 'create' && user_access('create orders', $account)) {
@@ -507,7 +542,7 @@ function commerce_order_states() {
     // Give other modules a chance to alter the order states.
     drupal_alter('commerce_order_state_info', $order_states);
 
-    uasort($order_states, 'commerce_sort_weight');
+    uasort($order_states, 'drupal_sort_weight');
   }
 
   return $order_states;
@@ -567,7 +602,7 @@ function commerce_order_state_get_title($name = NULL) {
   // Return a state title if specified and it exists.
   if (!empty($name)) {
     if (isset($order_states[$name])) {
-      return $order_states[$name]->title;
+      return $order_states[$name]['title'];
     }
     else {
       // Return FALSE if it does not exist.
@@ -577,7 +612,7 @@ function commerce_order_state_get_title($name = NULL) {
 
   // Otherwise turn the array values into the status title only.
   foreach ($order_states as $key => $value) {
-    $order_states[$key] = $value->title;
+    $order_states[$key] = $value['title'];
   }
 
   return $order_states;
@@ -623,7 +658,7 @@ function commerce_order_statuses($conditions = array()) {
         'weight' => 0,
         'status' => TRUE,
       );
-      $order_status = (object) array_merge($defaults, (array) $order_status);
+      $order_status += $defaults;
 
       $order_statuses[$name] = $order_status;
     }
@@ -631,7 +666,7 @@ function commerce_order_statuses($conditions = array()) {
     // Give other modules a chance to alter the order statuses.
     drupal_alter('commerce_order_status_info', $order_statuses);
 
-    uasort($order_statuses, 'commerce_sort_weight');
+    uasort($order_statuses, 'drupal_sort_weight');
   }
 
   // Apply conditions to the returned statuses if specified.
@@ -646,7 +681,7 @@ function commerce_order_statuses($conditions = array()) {
       foreach ($conditions as $property => $value) {
         // If the current value for the specified property on the pane does not
         // match the filter value...
-        if ($order_status->{$property} != $value) {
+        if ($order_status[$property] != $value) {
           // Do not add it to the temporary array.
           $valid = FALSE;
         }
@@ -717,7 +752,7 @@ function commerce_order_status_get_title($name = NULL) {
   // Return a status title if specified and it exists.
   if (!empty($name)) {
     if (isset($order_statuses[$name])) {
-      return $order_statuses[$name]->title;
+      return $order_statuses[$name]['title'];
     }
     else {
       // Return FALSE if it does not exist.
@@ -727,7 +762,7 @@ function commerce_order_status_get_title($name = NULL) {
 
   // Otherwise turn the array values into the status title only.
   foreach ($order_statuses as $key => $value) {
-    $order_statuses[$key] = $value->title;
+    $order_statuses[$key] = $value['title'];
   }
 
   return $order_statuses;
@@ -747,23 +782,24 @@ function commerce_order_status_options_list() {
  *   The fully loaded order object to update.
  * @param $name
  *   The machine readable name string of the status to update to.
+ * @param $skip_save
+ *   TRUE to skip saving the order after updating the status; used when the
+ *     order would be saved elsewhere after the update.
  *
  * @return
  *   The updated order.
  */
 function commerce_order_status_update($order, $name) {
-  $new_order = clone($order);
-
   // Do not update the status if the order is already at it.
-  if ($new_order->status != $name) {
-    $new_order->status = $name;
+  if ($order->status != $name) {
+    $order->status = $name;
 
     // TODO: Alert modules via a hook / Rules that the order was updated.
 
-    $new_order = commerce_order_save($new_order);
+    $order = commerce_order_save($order);
   }
 
-  return $new_order;
+  return $order;
 }
 
 /**
@@ -775,12 +811,14 @@ function commerce_order_configure_order_type($type = 'commerce_order') {
     field_cache_clear();
   }
 
-  $field = field_info_field('line_items');
-  $instance = field_info_instance('commerce_order', 'line_items', $type);
+  // Look for or add a line item reference field to the order type.
+  $field_name = 'commerce_line_items';
+  $field = field_info_field($field_name);
+  $instance = field_info_instance('commerce_order', $field_name, $type);
 
   if (empty($field)) {
     $field = array(
-      'field_name' => 'line_items',
+      'field_name' => $field_name,
       'type' => 'commerce_line_item_reference',
       'cardinality' => FIELD_CARDINALITY_UNLIMITED,
       'entity_types' => array('commerce_order'),
@@ -792,7 +830,7 @@ function commerce_order_configure_order_type($type = 'commerce_order') {
 
   if (empty($instance)) {
     $instance = array(
-      'field_name' => 'line_items',
+      'field_name' => $field_name,
       'entity_type' => 'commerce_order',
       'bundle' => $type,
       'label' => t('Line items'),
@@ -821,7 +859,7 @@ function commerce_order_configure_order_type($type = 'commerce_order') {
   $entity_info = entity_get_info('commerce_customer_profile');
 
   foreach ($entity_info['bundles'] as $profile_type => $data) {
-    $field_name = 'customer_' . $profile_type;
+    $field_name = 'commerce_customer_' . $profile_type;
 
     $field = field_info_field($field_name);
     $instance = field_info_instance('commerce_order', $field_name, $type);
@@ -848,7 +886,7 @@ function commerce_order_configure_order_type($type = 'commerce_order') {
           'weight' => -5,
         ),
         'settings' => array(
-          'profilee_type' => array($profile_type),
+          'profile_type' => array($profile_type),
         ),
 
         // Define default formatters for the teaser and full view.
@@ -886,7 +924,7 @@ function commerce_order_get_properties($order, array $options, $name) {
       return url('admin/commerce/orders/' . $order->order_id . '/edit', $options);
     case 'state':
       $order_status = commerce_order_status_load($order->status);
-      return $order_status->state;
+      return $order_status['state'];
   }
 }
 
@@ -898,21 +936,4 @@ function commerce_order_set_properties($order, $name, $value) {
   if ($name == 'owner') {
     $order->uid = $value;
   }
-}
-
-/**
- * Implements hook_commerce_checkout_pane_info().
- */
-function commerce_order_commerce_checkout_pane_info() {
-  $checkout_panes = array();
-
-  $checkout_panes['order_mail'] = (object) array(
-    'title' => t('Order mail'),
-    'file' => 'includes/commerce_order.checkout_pane.inc',
-    'base' => 'commerce_order_mail_pane',
-    'page' => 'checkout',
-    'weight' => 3,
-  );
-
-  return $checkout_panes;
 }

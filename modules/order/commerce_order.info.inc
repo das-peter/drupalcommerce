@@ -70,11 +70,19 @@ function commerce_order_entity_property_info() {
     'query callback' => 'entity_metadata_table_query',
     'setter permission' => 'administer orders',
   );
+  $properties['changed'] = array(
+    'label' => t('Date changed'),
+    'description' => t('The date the order was most recently updated.'),
+    'type' => 'date',
+    'setter callback' => 'entity_property_verbatim_set',
+    'query callback' => 'entity_metadata_table_query',
+    'setter permission' => 'administer orders',
+  );
   $properties['type'] = array(
     'label' => t('Type'),
     'description' => t('The human readable name of the order type.'),
     'type' => 'text',
-    'options list' => 'commerce_order_type_get_name',
+    'options list' => 'commerce_order_type_options_list',
     'required' => TRUE,
     'query callback' => 'entity_metadata_table_query',
   );
@@ -102,6 +110,7 @@ function commerce_order_entity_property_info() {
     'description' => t('The e-mail address associated with this order.'),
     'setter callback' => 'entity_property_verbatim_set',
     'validation callback' => 'valid_email_address',
+    'query callback' => 'entity_metadata_table_query',
   );
 
   return $info;

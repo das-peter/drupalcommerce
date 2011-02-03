@@ -42,6 +42,11 @@ function commerce_product_token_info() {
   );
 
   // Chained tokens for products.
+  $product['creator'] = array(
+    'name' => t('Creator'),
+    'description' => t('The creator of the product.'),
+    'type' => 'user',
+  );
   $product['created'] = array(
     'name' => t('Date created'),
     'description' => t('The date the product was created.'),
@@ -104,6 +109,16 @@ function commerce_product_tokens($type, $tokens, array $data = array(), array $o
           break;
 
         // Default values for the chained tokens handled below.
+        case 'creator':
+          if (!$product->uid) {
+            $name = variable_get('anonymous', t('Anonymous'));
+          }
+          else {
+            $creator = user_load($product->uid);
+            $name = $creator->name;
+          }
+          $replacements[$original] = $sanitize ? filter_xss($name) : $name;
+          break;
         case 'created':
           $replacements[$original] = format_date($product->created, 'medium', '', NULL, $language_code);
           break;
@@ -112,6 +127,11 @@ function commerce_product_tokens($type, $tokens, array $data = array(), array $o
           $replacements[$original] = format_date($product->changed, 'medium', '', NULL, $language_code);
           break;
       }
+    }
+
+    if ($creator_tokens = token_find_with_prefix($tokens, 'creator')) {
+      $creator = user_load($product->uid);
+      $replacements += token_generate('user', $creator_tokens, array('user' => $creator), $options);
     }
 
     foreach (array('created', 'changed') as $date) {
