@@ -462,7 +462,7 @@ function commerce_checkout_panes($conditions = array()) {
         'review' => TRUE,
         'callbacks' => array(),
       );
-      array_merge($checkout_pane, $defaults);
+      $checkout_pane += $defaults;
 
       // Merge in default callbacks.
       foreach (array('settings_form', 'checkout_form', 'checkout_form_validate', 'checkout_form_submit', 'review') as $callback) {
