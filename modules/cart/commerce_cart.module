@@ -308,18 +308,18 @@ function commerce_cart_commerce_order_load($orders) {
       $unchanged_line_items = array();
 
       foreach ($order_wrapper->commerce_line_items as $delta => $line_item_wrapper) {
+
+        $line_item = clone($line_item_wrapper->value());
+
         // If the line item is a product line item...
         if ($line_item_wrapper->type->value() == 'product') {
-          // Create a new product line item referencing the same product as though
-          // we had not added it to the cart yet, but use the current quantity.
-          $line_item = commerce_product_line_item_new($line_item_wrapper->commerce_product->value(), $line_item_wrapper->quantity->value(), $order->order_id);
+
+          // Reset price values to do a fresh calculation.
+          commerce_product_line_item_populate($line_item, $line_item_wrapper->commerce_product->value(), $line_item_wrapper->quantity->value());
 
           // Process the unit price through Rules so it reflects the user's actual
           // current purchase price.
           rules_invoke_event('commerce_product_calculate_sell_price', $line_item);
-        }
-        else {
-          $line_item = clone($line_item_wrapper->value());
         }
 
         // Allow other modules alter line items on a shopping cart refresh.
