@@ -19,8 +19,21 @@ function commerce_line_item_ui_menu() {
     'access arguments' => array('administer line item types'),
     'file' => 'includes/commerce_line_item_ui.types.inc',
   );
+  $items['admin/commerce/config/line-items/%'] = array(
+    'title' => 'Line item types',
+    'page callback' => 'commerce_line_item_ui_line_item_type_redirect',
+    'page arguments' => array(4),
+    'access arguments' => array('administer line item types'),
+  );
 
   return $items;
+}
+
+/**
+ * Redirects a line item type URL to its fields management page.
+ */
+function commerce_line_item_ui_line_item_type_redirect($type) {
+  drupal_goto('admin/commerce/config/line-items/' . strtr($type, array('_' => '-')) . '/fields');
 }
 
 /**
@@ -28,8 +41,8 @@ function commerce_line_item_ui_menu() {
  */
 function commerce_line_item_ui_menu_alter(&$items) {
   // Transform the field UI tabs into contextual links.
-  $items['admin/commerce/config/line-items/%commerce_line_item_type/fields']['context'] = MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE;
-  $items['admin/commerce/config/line-items/%commerce_line_item_type/display']['context'] = MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE;
+  $items['admin/commerce/config/line-items/%/fields']['context'] = MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE;
+  $items['admin/commerce/config/line-items/%/display']['context'] = MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE;
 }
 
 /**
@@ -52,9 +65,8 @@ function commerce_line_item_ui_theme() {
 function commerce_line_item_ui_entity_info_alter(&$entity_info) {
   foreach ($entity_info['commerce_line_item']['bundles'] as $type => &$bundle) {
     $bundle['admin'] = array(
-      'path' => 'admin/commerce/config/line-items/%commerce_line_item_type',
+      'path' => 'admin/commerce/config/line-items/%',
       'real path' => 'admin/commerce/config/line-items/' . $type,
-      'bundle argument' => 4,
       'access arguments' => array('administer line item types'),
     );
   }
@@ -70,7 +82,7 @@ function commerce_line_item_ui_form_alter(&$form, &$form_state, $form_id) {
       // Load the line item type being modified for this form.
       $line_item_type = commerce_line_item_type_load($form['#bundle']);
 
-      drupal_set_title(check_plain($line_item_type->name));
+      drupal_set_title(check_plain($line_item_type['name']));
     }
   }
 }
