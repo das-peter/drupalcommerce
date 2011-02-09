@@ -36,7 +36,7 @@ function commerce_product_features_export_options() {
   $product_types = commerce_product_types();
   if (!empty($product_types)) {
     foreach ($product_types as $type) {
-      $options[$type->type] = $type->name;
+      $options[$type['type']] = $type['name'];
     }
   }
   return $options;
@@ -71,15 +71,15 @@ function commerce_product_features_export_render($module, $data) {
   foreach ($data as $type) {
     $info = commerce_product_type_load($type);
     if (!empty($info)) {
-      $output[] = "  (object) array(";
+      $output[] = "  array(";
       foreach ($info as $key => $t) {
         if ($t) {
-          $text = str_replace("'", "\'", $info->$key);
+          $text = str_replace("'", "\'", $info[$key]);
           $text = (!empty($text) && $key != 'type') ? "t('{$text}')" : "'{$text}'";
           $output[] = "      '{$key}' => {$text},";
         }
         else {
-          $output[] = "      '{$key}' => '{$info->$key}',";
+          $output[] = "      '{$key}' => '$info[$key]',";
         }
       }
       $output[] = "    ),";
@@ -102,8 +102,8 @@ function commerce_product_features_revert($module) {
     $existing_types = commerce_product_types();
     foreach ($default_types as $type) {
       // Add / or update
-      if (!isset($existing_types[$type->type])) {
-        $type->is_new = TRUE;
+      if (!isset($existing_types[$type['type']])) {
+        $type['is_new'] = TRUE;
       }
       // Use UI function because it provides already the logic we need
       module_invoke('commerce_product_ui', 'product_type_save', $type);
