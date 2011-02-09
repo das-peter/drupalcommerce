@@ -306,7 +306,8 @@ function commerce_product_type_options_list() {
 /**
  * Title callback: return the human-readable product type name.
  */
-function commerce_product_type_title($product_type) {
+function commerce_product_type_title($type) {
+  $product_type = commerce_product_type_load($type);
   return $product_type['name'];
 }
 
