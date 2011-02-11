@@ -31,6 +31,7 @@ abstract class CommerceBaseTestCase extends DrupalWebTestCase {
     $dependencies = array(
       // API
       'entity',
+    	'entity_token',
       'rules',
       'addressfield',
       //'rules_admin',
@@ -53,6 +54,7 @@ abstract class CommerceBaseTestCase extends DrupalWebTestCase {
       'commerce_product_reference',
       'commerce_payment',
       'commerce_cart',
+      'commerce_tax',
     );
     $ui = array(
       //'commerce_ui' // Already added in $api due to checkout module
@@ -61,6 +63,7 @@ abstract class CommerceBaseTestCase extends DrupalWebTestCase {
       'commerce_product_ui',
       'commerce_customer_ui',
       'commerce_payment_ui',
+      //'rules_admin',
     );
     $payment = array(
       'commerce_payment_example',
@@ -125,6 +128,7 @@ abstract class CommerceBaseTestCase extends DrupalWebTestCase {
       'administer taxonomy',
       'administer permissions',
       'administer users',
+      'administer rules',
     );
     $store_admin = array(
       'administer checkout',
@@ -183,13 +187,12 @@ abstract class CommerceBaseTestCase extends DrupalWebTestCase {
     return $this->createUserWithPermissionHelper('store admin');
   }
 
-
   /**
    * Creates a dummy product type for use with other tests.
    *
    * @return
    *  A product type.
-   *  FALSE if the appropraite modules were not available.
+   *  FALSE if the appropiate modules were not available.
    */
   public function createDummyProductType($type = 'product_type', $name = 'Product Type', $description = '', $help = '', $append_random = TRUE) {
     if (module_exists('commerce_product')) {
@@ -227,7 +230,7 @@ abstract class CommerceBaseTestCase extends DrupalWebTestCase {
    *  Optional. The product type to base this product on. Defaults to 'product'.
    * @return
    *  A product type with most of it's basic fields set random values.
-   *  FALSE if the appropraite modules were not available.
+   *  FALSE if the appropiate modules were not available.
    */
   public function createDummyProduct($sku = '', $title = '', $amount = -1, $currency_code = 'USD', $uid = 1, $type_given = 'product') {
     if (module_exists('commerce_product')) {
@@ -260,11 +263,14 @@ abstract class CommerceBaseTestCase extends DrupalWebTestCase {
    * @param $field_name
    *  Only used if $attach_product_reference_field is TRUE. Sets the name for
    *  the field instance to attach. Creates the field if it doesn't exist.
+   * @param $cardinality_reference_field
+   *  Only used if $attach_product_reference_field is TRUE. Sets the
+   *  cardinality for the field instance to attach.
    * @return
    *  An object for the content type.
    * @see attachProductReferenceField()
    */
-  public function createDummyProductDisplayContentType($type = 'product_display', $attach_product_reference_field = TRUE, $field_name = 'field_product') {
+  public function createDummyProductDisplayContentType($type = 'product_display', $attach_product_reference_field = TRUE, $field_name = 'field_product', $cardinality_reference_field = 1) {
     // If the specified node type already exists, return it now.
     if ($content_type = node_type_load($type)) {
       return $content_type;
@@ -287,10 +293,45 @@ abstract class CommerceBaseTestCase extends DrupalWebTestCase {
 
     if ($attach_product_reference_field) {
       // Maybe $instance should be returned as well
-      $instance = $this->attachProductReferenceField($type, $field_name);
+      $instance = $this->attachProductReferenceField($type, $field_name, $cardinality_reference_field);
     }
 
     return $content_type;
+  }
+
+  /**
+   * Create a dummy order in a given status.
+   *
+   * @param $uid
+   * 	Id of the user that owns the order.
+   * @param $products
+   * 	Array of products that are going to be added to the order.
+   * @param $status
+   * 	Status of the order
+   * @return
+   * A commerce order object in the given status.
+   */
+  public function createDummyOrder($uid = 1, $products = array(), $status = 'cart') {
+    // If there aren't products to add to the order, create one.
+    if (empty($products)) {
+      $sku = 'PROD-01';
+      $product_name = 'Product One';
+      $product = $this->createDummyProduct($sku, $product_name, -1, 'USD', $uid);
+      $products[]= $product;
+    }
+
+    // Create a new order and add the products to the cart
+    $order = commerce_order_new($uid, $status);
+    foreach($products as $product) {
+      $order = commerce_cart_product_add($uid, $product->product_id, rand(1,100));
+    }
+
+    // If the order should be in a different status, update it.
+    if ($status <> 'cart') {
+      commerce_order_status_update($order, $status);
+    }
+
+    return $order;
   }
 
   /**
@@ -307,7 +348,7 @@ abstract class CommerceBaseTestCase extends DrupalWebTestCase {
    *  An object containing the field instance that was created.
    * @see createDummyProductDisplayContentType()
    */
-  public function attachProductReferenceField($content_type = 'product_display', $field_name = 'field_product') {
+  public function attachProductReferenceField($content_type = 'product_display', $field_name = 'field_product', $cardinality = 1) {
     if (module_exists('commerce_product')) {
       // Check if the field has already been created.
       $field_info = field_info_field($field_name);
@@ -316,7 +357,7 @@ abstract class CommerceBaseTestCase extends DrupalWebTestCase {
         $field = array(
           'field_name' => $field_name,
           'type' => 'commerce_product_reference',
-          'cardinality' => 1,
+          'cardinality' => $cardinality,
           'translatable' => FALSE,
         );
         field_create_field($field);
@@ -366,8 +407,8 @@ abstract class CommerceBaseTestCase extends DrupalWebTestCase {
   /**
    * Creates a product display node with an associated product.
    *
-   * @param $product_id
-   *  Product ID to use for the product reference field.
+   * @param $product_ids
+   *  Array of product IDs to use for the product reference field.
    * @param $title
    *  Optional title for the product node. Will default to a random name.
    * @param $product_display_content_type
@@ -379,7 +420,7 @@ abstract class CommerceBaseTestCase extends DrupalWebTestCase {
    * @return
    *  The newly saved $node object.
    */
-  public function createDummyProductNode($product_id, $title = '', $product_display_content_type = 'product_display', $product_ref_field_name = 'field_product') {
+  public function createDummyProductNode($product_ids, $title = '', $product_display_content_type = 'product_display', $product_ref_field_name = 'field_product') {
     if (module_exists('commerce_product')) {
       if (empty($title)) {
         $title = $this->randomString(10);
@@ -388,7 +429,9 @@ abstract class CommerceBaseTestCase extends DrupalWebTestCase {
       node_object_prepare($node);
       $node->uid = 1;
       $node->title = $title;
-      $node->{$product_ref_field_name}[LANGUAGE_NONE][]['product_id'] = $product_id;
+      foreach ($product_ids as $product_id) {
+        $node->{$product_ref_field_name}[LANGUAGE_NONE][]['product_id'] = $product_id;
+      }
       node_save($node);
       return $node;
     } else {
@@ -415,7 +458,7 @@ abstract class CommerceBaseTestCase extends DrupalWebTestCase {
       $title = "Product #$i";
       $price = $i*10;
       $product = $this->createDummyProduct($sku, $title, $price);
-      $product_node = $this->createDummyProductNode($product->product_id, $title);
+      $product_node = $this->createDummyProductNode(array($product->product_id), $title);
       $product_nodes[$i] = $product_node;
     }
     return $product_nodes;
@@ -489,8 +532,6 @@ class CommerceSandboxTestCase extends CommerceBaseTestCase {
    * Sandbox for test development
    */
   public function testTestTest() {
-
-
   }
 }
 
@@ -591,7 +632,6 @@ class CommerceBaseTesterTestCase extends CommerceBaseTestCase {
    */
   public function testTestCreateDummyProductType() {
     $product_type = $this->createDummyProductType();
-    debug($product_type);
     $store_admin = $this->createStoreAdmin();
     $this->drupalLogin($store_admin);
     $this->drupalGet('admin/commerce/products/types');
@@ -609,7 +649,6 @@ class CommerceBaseTesterTestCase extends CommerceBaseTestCase {
     $this->drupalPost('admin/modules', array(), 'Save configuration');
 
     $product = $this->createDummyProduct();
-    debug($product);
     $store_admin = $this->createStoreAdmin();
     $this->drupalLogin($store_admin);
     //$super_admin = $this->createUserWithPermissionHeper(array('site admin', 'store admin'));
@@ -652,7 +691,7 @@ class CommerceBaseTesterTestCase extends CommerceBaseTestCase {
     $sku = 'PROD-01';
     $product_name = 'Product One';
     $product = $this->createDummyProduct($sku, $product_name);
-    $product_node = $this->createDummyProductNode($product->product_id, $product_name);
+    $product_node = $this->createDummyProductNode(array($product->product_id), $product_name);
 
     $this->drupalLogin($this->site_admin);
     $this->drupalGet('node/1');
@@ -670,6 +709,25 @@ class CommerceBaseTesterTestCase extends CommerceBaseTestCase {
     $this->assertText($product_node->title, "Product <em>{$product_node->title}</em> node page exists!");
   }
 
+  /**
+   * Test the createDummyOrder function.
+   */
+  public function testTestCreateDummyOrder() {
+    $normal_user = $this->drupalCreateUser(array('access checkout'));
+    $this->drupalLogin($normal_user);
+
+    $sku = 'PROD-01';
+    $product_name = 'Product One';
+    $product = $this->createDummyProduct($sku, $product_name);
+    $order = $this->createDummyOrder($normal_user->uid, array($product));
+
+    // Check if the order is in cart status.
+    $this->assertTrue(commerce_cart_order_is_cart($order), t('Order is in cart status'));
+    $this->drupalGet('checkout');
+
+    $this->assertTitle(t('Checkout'). ' | Drupal', t('Checkout accesible for the order.'));
+    $this->assertText($product_name, t('Product is added to the order.'));
+  }
 
   /**
    * Test the currency value rounding.
