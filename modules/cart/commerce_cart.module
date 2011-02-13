@@ -513,15 +513,15 @@ function commerce_cart_order_load($uid = 0) {
     }
 
     // If a valid order ID was found, load the order now.
+    $cart_orders[$uid] = FALSE;
+    $order = FALSE;
     if ($order_id) {
-      $cart_orders[$uid] = commerce_order_load($order_id);
-    }
-    else {
-      $cart_orders[$uid] = FALSE;
+      $cart_orders[$uid] = $order_id;
+      $order = commerce_order_load($order_id);
     }
   }
 
-  return $cart_orders[$uid];
+  return $order;
 }
 
 /**
