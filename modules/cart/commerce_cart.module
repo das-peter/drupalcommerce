@@ -513,7 +513,7 @@ function commerce_cart_order_load($uid = 0) {
     }
   }
   // If a valid order ID was found, load the order now.
-  if (isset($cart_orders[$uid])) {
+  if (!empty($cart_orders[$uid])) {
     $order = commerce_order_load($cart_orders[$uid]);
   }
 
