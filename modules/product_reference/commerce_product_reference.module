@@ -388,6 +388,16 @@ function commerce_product_reference_field_widget_info() {
     ),
   );
 
+  // Non existing field. Not to bother the user with product references.
+  $widgets['commerce_product_reference_hidden'] = array(
+    'label' => t('Hidden reference field'),
+    'description' => t('Don\'t display the reference field - used if you have auto generated product references.'),
+    'field types' => array('commerce_product_reference'),
+    'behaviors' => array(
+      'multiple values' => FIELD_BEHAVIOR_CUSTOM,
+    ),
+  );
+
   return $widgets;
 }
 
@@ -463,6 +473,9 @@ function commerce_product_reference_field_widget_form(&$form, &$form_state, $fie
       '#size' => $instance['widget']['settings']['size'],
       '#element_validate' => array('commerce_product_reference_autocomplete_validate'),
     );
+  }
+  elseif ($instance['widget']['type'] == 'commerce_product_reference_hidden') {
+    return array();
   }
 }
 
