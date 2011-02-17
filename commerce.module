@@ -405,12 +405,6 @@ function commerce_currency_convert($amount, $currency_code, $target_currency_cod
 function commerce_currency_amount_to_integer($amount, $currency_code) {
   static $factors;
 
-  // Check for floating point amount.
-  // The addition casts the value to the appropirate type.
-  if (!is_float($amount+0)) {
-    return $amount;
-  }
-
   // If the divisor for this currency hasn't been calculated yet...
   if (empty($factors[$currency_code])) {
     // Load the currency and calculate its factor as a power of 10.
