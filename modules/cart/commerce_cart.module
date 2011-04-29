@@ -250,7 +250,11 @@ function commerce_cart_user_login(&$edit, $account) {
     if ($anonymous_order_wrapper->commerce_line_items->count() > 0) {
       // Add each of the anonymous cart items to the authenticated user's cart.
       foreach ($anonymous_order_wrapper->commerce_line_items as $delta => $line_item_wrapper) {
-        commerce_cart_product_add($account->uid, $line_item_wrapper->commerce_product->product_id->value(), $line_item_wrapper->quantity->value());
+        $product_id = NULL;
+        if (!empty($line_item_wrapper->commerce_product)) {
+          $product_id = $line_item_wrapper->commerce_product->product_id->value();
+        }
+        commerce_cart_product_add($account->uid, $product_id, $line_item_wrapper->quantity->value());
       }
 
       // Delete the anonymous order from the database and clear the reference.
